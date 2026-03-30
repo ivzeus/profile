@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chess Solver</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=JetBrains+Mono:wght@300;400;600&display=swap');
+
+  :root {
+    --bg: #0a0a0f;
+    --surface: #12121a;
+    --surface2: #1a1a26;
+    --border: #2a2a3d;
+    --accent: #c8a96e;
+    --accent2: #7c9ec7;
+    --white-piece: #f0e6d0;
+    --black-piece: #1a1a1a;
+    --light-sq: #d4b483;
+    --dark-sq: #7a5230;
+    --highlight: rgba(200, 169, 110, 0.4);
+    --move-dot: rgba(200, 169, 110, 0.7);
+    --text: #e8e0d5;
+    --text-dim: #6a6580;
+    --win: #5a9e6f;
+    --loss: #9e5a5a;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .noise {
+    position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    opacity: 0.03;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size: 200px;
+  }
+
+  header {
+    width: 100%; padding: 2rem 3rem 1rem;
+    border-bottom: 1px solid var(--border);
+    position: relative; z-index: 1;
+    display: flex; align-items: baseline; gap: 1.5rem;
+  }
+
+  header h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 2rem; font-weight: 900;
+    color: var(--accent);
+    letter-spacing: -0.02em;
+  }
+
+  header span {
+    font-size: 0.7rem; color: var(--text-dim);
+    letter-spacing: 0.15em; text-transform: uppercase;
+  }
+
+  .main {
+    display: grid;
+    grid-template-columns: 340px 1fr;
+    gap: 2rem;
+    width: 100%; max-width: 1100px;
+    padding: 2rem;
+    position: relative; z-index: 1;
+    flex: 1;
+  }
+
+  /* LEFT PANEL */
+  .panel {
+    display: flex; flex-direction: column; gap: 1.2rem;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.2rem;
+  }
+
+  .card-title {
+    font-size: 0.65rem; letter-spacing: 0.2em;
+    text-transform: uppercase; color: var(--accent);
+    margin-bottom: 0.9rem;
+  }
+
+  label { font-size: 0.72rem; color: var(--text-dim); display: block; margin-bottom: 0.3rem; }
+
+  select, input[type=number] {
+    width: 100%; padding: 0.5rem 0.7rem;
+    background: var(--surface2); border: 1px solid var(--border);
+    color: var(--text); font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem; border-radius: 4px;
+    outline: none; transition: border-color 0.2s;
+  }
+  select:focus, input[type=number]:focus { border-color: var(--accent); }
+
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.7rem; }
+
+  .btn {
+    padding: 0.6rem 1rem;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    border-radius: 4px; cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.05em;
+  }
+  .btn:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-primary {
+    background: var(--accent); color: #0a0a0f;
+    border-color: var(--accent); font-weight: 600;
+  }
+  .btn-primary:hover { background: #d4b96e; color: #0a0a0f; }
+  .btn-danger { border-color: #9e5a5a; color: #9e5a5a; }
+  .btn-danger:hover { background: #9e5a5a22; }
+
+  .piece-selector {
+    display: grid; grid-template-columns: repeat(6, 1fr); gap: 0.4rem;
+    margin-bottom: 0.8rem;
+  }
+
+  .piece-btn {
+    aspect-ratio: 1;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.4rem; cursor: pointer;
+    border: 1px solid var(--border);
+    border-radius: 4px; background: var(--surface2);
+    transition: all 0.15s; position: relative;
+  }
+  .piece-btn:hover { border-color: var(--accent); transform: scale(1.05); }
+  .piece-btn.active { border-color: var(--accent); background: var(--accent)22; box-shadow: 0 0 12px var(--accent)33; }
+
+  .color-toggle {
+    display: flex; gap: 0.5rem; margin-bottom: 0.5rem;
+  }
+  .color-btn {
+    flex: 1; padding: 0.4rem;
+    text-align: center; cursor: pointer;
+    border: 1px solid var(--border);
+    border-radius: 4px; font-size: 0.72rem;
+    transition: all 0.2s;
+  }
+  .color-btn.active-w { border-color: #f0e6d0; background: #f0e6d022; color: #f0e6d0; }
+  .color-btn.active-b { border-color: #888; background: #88888822; color: #aaa; }
+
+  .mode-toggle { display: flex; gap: 0.5rem; margin-bottom: 0.8rem; }
+  .mode-btn {
+    flex: 1; padding: 0.4rem; text-align: center; cursor: pointer;
+    border: 1px solid var(--border); border-radius: 4px; font-size: 0.72rem;
+    font-family: 'JetBrains Mono', monospace; background: var(--surface2);
+    color: var(--text-dim); transition: all 0.2s;
+  }
+  .mode-btn.active-place { border-color: var(--accent2); color: var(--accent2); background: rgba(124,158,199,0.1); }
+  .mode-btn.active-invalid { border-color: #9e5a5a; color: #c47; background: rgba(0, 0, 0, 0.15); }
+
+  /* Load / Export card */
+  .load-toggle {
+    cursor: pointer; user-select: none;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .load-toggle-arrow { font-size: 0.6rem; color: var(--text-dim); transition: transform 0.2s; }
+  .load-toggle-arrow.open { transform: rotate(180deg); }
+  .load-body { margin-top: 0.7rem; }
+  .load-textarea {
+    width: 100%; height: 130px; resize: vertical;
+    background: var(--surface2); border: 1px solid var(--border);
+    color: var(--text); font-family: 'JetBrains Mono', monospace;
+    font-size: 0.68rem; border-radius: 4px; padding: 0.5rem;
+    outline: none; transition: border-color 0.2s; line-height: 1.5;
+  }
+  .load-textarea:focus { border-color: var(--accent); }
+  .load-feedback {
+    font-size: 0.65rem; margin: 0.4rem 0; min-height: 1.2em;
+    white-space: pre-wrap; line-height: 1.5;
+  }
+  .load-feedback.ok   { color: var(--win); }
+  .load-feedback.warn { color: #c8a030; }
+  .load-feedback.err  { color: var(--loss); }
+
+  .pieces-list { max-height: 140px; overflow-y: auto; }
+  .pieces-list::-webkit-scrollbar { width: 4px; }
+  .pieces-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .piece-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0.3rem 0.4rem;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.72rem;
+  }
+  .piece-item:last-child { border-bottom: none; }
+  .piece-item .pi-sym { font-size: 1.1rem; margin-right: 0.4rem; }
+  .piece-item .pi-del { cursor: pointer; color: var(--text-dim); font-size: 0.8rem; transition: color 0.15s; }
+  .piece-item .pi-del:hover { color: #9e5a5a; }
+
+  /* SOLUTION LOG */
+  .solution-log {
+    flex: 1; overflow-y: auto; font-size: 0.72rem;
+    line-height: 1.8; color: var(--text-dim);
+    max-height: 200px;
+  }
+  .solution-log::-webkit-scrollbar { width: 4px; }
+  .solution-log::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  .log-move { color: var(--text); }
+  .log-move span { color: var(--accent); font-weight: 600; }
+  .log-info { color: var(--text-dim); font-size: 0.65rem; }
+  .log-win { color: var(--win); font-weight: 600; }
+  .log-fail { color: var(--loss); }
+  .log-thinking { color: var(--accent2); animation: pulse 1s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+  /* RIGHT: BOARD AREA */
+  .board-area {
+    display: flex; flex-direction: column; gap: 1.2rem;
+    align-items: center;
+  }
+
+  .board-wrap {
+    position: relative;
+    border: 2px solid var(--border);
+    border-radius: 4px;
+    box-shadow: 0 0 40px rgba(200,169,110,0.08), 0 20px 60px rgba(0,0,0,0.6);
+  }
+
+  #board-canvas {
+    display: block;
+    cursor: crosshair;
+  }
+
+  .board-labels {
+    display: flex; align-items: center;
+    font-size: 0.6rem; color: var(--text-dim);
+    letter-spacing: 0.05em; margin-top: 0.4rem;
+  }
+
+  /* Status bar */
+  .status-bar {
+    width: 100%;
+    display: flex; align-items: center; gap: 1rem;
+    padding: 0.6rem 1rem;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; font-size: 0.72rem;
+  }
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text-dim); }
+  .status-dot.active { background: var(--win); box-shadow: 0 0 6px var(--win); }
+  .status-dot.error { background: var(--loss); }
+  .status-dot.thinking { background: var(--accent2); animation: pulse 0.8s infinite; }
+
+  /* Move navigator */
+  .move-nav {
+    display: flex; gap: 0.5rem; align-items: center;
+  }
+  .move-counter { font-size: 0.72rem; color: var(--text-dim); min-width: 80px; text-align: center; }
+
+  /* Tab component */
+  .tab-bar {
+    display: flex; margin-bottom: 0.9rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .tab-btn {
+    padding: 0.35rem 0.9rem;
+    background: none; border: none; border-bottom: 2px solid transparent;
+    color: var(--text-dim); cursor: pointer;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem; letter-spacing: 0.05em;
+    transition: all 0.2s; margin-bottom: -1px;
+  }
+  .tab-btn:hover { color: var(--text); }
+  .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .tab-section-label {
+    font-size: 0.58rem; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--text-dim); margin: 0.8rem 0 0.5rem;
+    border-top: 1px solid var(--border); padding-top: 0.6rem;
+  }
+
+  .turn-indicator {
+    display: flex; gap: 0.5rem; align-items: center;
+    font-size: 0.72rem;
+  }
+  .turn-gem {
+    width: 12px; height: 12px; border-radius: 50%;
+    border: 1px solid var(--border);
+  }
+  .turn-gem.white { background: #f0e6d0; }
+  .turn-gem.black { background: #2a2a2a; }
+
+  /* Search log panel */
+  .search-log-panel {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.8rem 1rem;
+    font-size: 0.7rem;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .search-log-title {
+    font-size: 0.6rem; letter-spacing: 0.2em;
+    text-transform: uppercase; color: var(--accent);
+    margin-bottom: 0.6rem;
+  }
+  .search-log-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.4rem 1rem;
+  }
+  .search-stat {
+    display: flex; flex-direction: column; gap: 0.1rem;
+  }
+  .search-stat-label { font-size: 0.58rem; color: var(--text-dim); letter-spacing: 0.1em; text-transform: uppercase; }
+  .search-stat-value { color: var(--accent2); font-size: 0.78rem; font-weight: 600; }
+  .search-log-status {
+    margin-top: 0.5rem; padding-top: 0.5rem;
+    border-top: 1px solid var(--border);
+    color: var(--text-dim); font-size: 0.65rem;
+  }
+  .search-log-status.thinking { color: var(--accent2); }
+  .search-log-status.done     { color: var(--win); }
+  .search-log-status.error    { color: var(--loss); }
+</style>
+</head>
+<body>
+<div class="noise"></div>
+
+<header>
+  <h1>♟ Chess Solver</h1>
+  <span>A* + Minimax engine · depth 10</span>
+</header>
+
+<div class="main">
+  <!-- LEFT PANEL -->
+  <div class="panel">
+
+    <!-- Board Configuration (tabbed) -->
+    <div class="card">
+      <div class="card-title">Board Configuration</div>
+      <div class="tab-bar">
+        <button class="tab-btn active" id="tab-manual" onclick="switchTab('manual')">Manual</button>
+        <button class="tab-btn" id="tab-file" onclick="switchTab('file')">Import</button>
+      </div>
+
+      <!-- Manual tab -->
+      <div id="tab-content-manual">
+        <div class="row2" style="margin-bottom:0.5rem">
+          <div>
+            <label>Rows</label>
+            <input type="number" id="inp-rows" min="2" max="12" value="8">
+          </div>
+          <div>
+            <label>Columns</label>
+            <input type="number" id="inp-cols" min="2" max="12" value="8">
+          </div>
+        </div>
+        <button class="btn" style="width:100%;margin-bottom:0.8rem;border-color:var(--accent2);color:var(--accent2)" onclick="applyBoardSize()">⊞ Apply Board Size</button>
+        <label>First to Move</label>
+        <select id="inp-first" onchange="state.firstTo=this.value; setPlayerColor(this.value); document.getElementById('turn-label').textContent=(this.value==='white'?'White':'Black')+' to move'">
+          <option value="white">White</option>
+          <option value="black">Black</option>
+        </select>
+        <div style="display:none">
+          <input type="number" id="inp-depth" min="1" max="20" value="10">
+        </div>
+        <div style="display:none">
+          <select id="inp-algorithm"></select>
+        </div>
+
+        <div class="tab-section-label">Place Pieces</div>
+        <div class="mode-toggle">
+          <div class="mode-btn active-place" id="btn-mode-place" onclick="setMode('place')">✦ Place Pieces</div>
+          <div class="mode-btn" id="btn-mode-invalid" onclick="setMode('invalid')">✕ Mark Invalid</div>
+        </div>
+        <div id="piece-controls">
+          <div class="color-toggle">
+            <div class="color-btn active-w" id="btn-white" onclick="selectColor('white')">♔ White</div>
+            <div class="color-btn" id="btn-black" onclick="selectColor('black')">♚ Black</div>
+          </div>
+          <div class="piece-selector" id="piece-selector"></div>
+          <div style="font-size:0.65rem;color:var(--text-dim);margin-bottom:0.6rem">
+            Select piece → click board cell to place. Click placed piece to remove.
+          </div>
+        </div><!-- /piece-controls -->
+        <div id="invalid-hint" style="display:none;font-size:0.65rem;color:#c47;margin-bottom:0.6rem">
+          Click cells to toggle them as invalid. Invalid cells block all movement.
+        </div>
+        <div style="display:flex;gap:0.5rem">
+          <button class="btn btn-danger" style="flex:1;font-size:0.68rem" onclick="clearBoard()">Clear Board</button>
+        </div>
+      </div><!-- /tab-content-manual -->
+
+      <!-- From file tab -->
+      <div id="tab-content-file" style="display:none">
+        <textarea class="load-textarea" id="load-json"
+          placeholder='{"rows":6,"cols":6,"firstTo":"white","pieces":[{"type":"king","color":"white","row":5,"col":3}],"invalidCells":[]}'></textarea>
+        <div class="load-feedback" id="load-feedback"></div>
+        <div style="display:flex;gap:0.5rem;margin-top:0.4rem">
+          <button class="btn btn-primary" style="flex:1;font-size:0.68rem" onclick="loadBoardState()">⊞ Apply</button>
+          <button class="btn" style="font-size:0.68rem" onclick="document.getElementById('load-json').value='';document.getElementById('load-feedback').textContent=''">✕ Clear</button>
+          <button class="btn" style="font-size:0.68rem" id="copy-state-btn" onclick="copyBoardState()">⎘ Copy State</button>
+        </div>
+      </div><!-- /tab-content-file -->
+    </div>
+
+    <!-- Pieces list -->
+    <div class="card" style="flex:1">
+      <div class="card-title">Pieces on Board</div>
+      <div class="pieces-list" id="pieces-list"></div>
+    </div>
+
+    <!-- Solution log -->
+    <div class="card" style="flex:2">
+      <div class="card-title">Solution</div>
+      <div class="solution-log" id="solution-log">
+        <div class="log-info">Configure board and press Solve →</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: BOARD -->
+  <div class="board-area">
+    <div class="status-bar">
+      <div class="status-dot" id="status-dot"></div>
+      <div id="status-text" style="flex:1">Ready. Place pieces on the board.</div>
+      <div class="turn-indicator">
+        <div class="turn-gem white"></div>
+        <span id="turn-label">White to move</span>
+        <div class="turn-gem black"></div>
+      </div>
+    </div>
+
+    <div class="board-wrap">
+      <canvas id="board-canvas"></canvas>
+    </div>
+
+    <div class="move-nav">
+      <button class="btn" onclick="navMove(-1)">◀ Prev</button>
+      <div class="move-counter" id="move-counter">— / —</div>
+      <button class="btn" onclick="navMove(1)">Next ▶</button>
+      <button class="btn btn-danger" id="stop-btn" onclick="stopSolver()" title="Stop the running search" style="display:none">■ Stop</button>
+      <button class="btn btn-danger" onclick="resetSolution()" title="Clear solution, keep board">↺ Reset</button>
+      <button class="btn btn-primary" id="solve-btn" onclick="runSolver()">▶ Solve</button>
+    </div>
+
+    <!-- Search log panel -->
+    <div class="search-log-panel" id="search-log-panel">
+      <div class="search-log-title">Search Statistics</div>
+      <div class="search-log-grid">
+        <div class="search-stat">
+          <div class="search-stat-label">Nodes searched</div>
+          <div class="search-stat-value" id="stat-nodes">—</div>
+        </div>
+        <div class="search-stat">
+          <div class="search-stat-label">Branches pruned</div>
+          <div class="search-stat-value" id="stat-pruned">—</div>
+        </div>
+        <div class="search-stat">
+          <div class="search-stat-label">TT hits</div>
+          <div class="search-stat-value" id="stat-tthits">—</div>
+        </div>
+        <div class="search-stat">
+          <div class="search-stat-label">Elapsed</div>
+          <div class="search-stat-value" id="stat-elapsed">—</div>
+        </div>
+        <div class="search-stat">
+          <div class="search-stat-label">Speed</div>
+          <div class="search-stat-value" id="stat-speed">—</div>
+        </div>
+        <div class="search-stat">
+          <div class="search-stat-label">Depth reached</div>
+          <div class="search-stat-value" id="stat-depth">—</div>
+        </div>
+      </div>
+      <div class="search-log-status" id="stat-status">Idle. Press Solve to start.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+var __WORKER_SRC__='var PIECE_VALUES={king:1e4,queen:900,rook:500,bishop:330,knight:320,pawn:100};function opponent(e){return"white"===e?"black":"white"}function getPieceAt(e,r,t){return e.find(e=>e.row===r&&e.col===t)||null}var invalidCells=[],playerColor="white";function setInvalidCells(e){invalidCells=e}function setPlayerColor(e){playerColor=e}function isOnBoard(e,r,t,o){return!invalidCells.some(t=>t.r===e&&t.c===r)&&(e>=0&&e<t&&r>=0&&r<o)}function getLegalMoves(e,r,t,o){var a=[],{type:s,color:n,row:c,col:i}=r,l=opponent(n),p=(r,s)=>{if(!isOnBoard(r,s,t,o))return!1;var n=getPieceAt(e,r,s);return n?(n.color===l&&a.push({fromR:c,fromC:i,toR:r,toC:s,capture:!0}),!1):(a.push({fromR:c,fromC:i,toR:r,toC:s,capture:!1}),!0)},h=(r,s)=>{for(var n=c+r,p=i+s;isOnBoard(n,p,t,o);){var h=getPieceAt(e,n,p);if(h){h.color===l&&a.push({fromR:c,fromC:i,toR:n,toC:p,capture:!0});break}a.push({fromR:c,fromC:i,toR:n,toC:p,capture:!1}),n+=r,p+=s}};if("rook"===s&&[[1,0],[-1,0],[0,1],[0,-1]].forEach(([e,r])=>h(e,r)),"bishop"===s&&[[1,1],[1,-1],[-1,1],[-1,-1]].forEach(([e,r])=>h(e,r)),"queen"===s&&[[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]].forEach(([e,r])=>h(e,r)),"knight"===s&&[[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]].forEach(([e,r])=>p(c+e,i+r)),"king"===s&&[[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]].forEach(([e,r])=>p(c+e,i+r)),"pawn"===s){var u=n===playerColor?-1:1;isOnBoard(c+u,i,t,o)&&!getPieceAt(e,c+u,i)&&a.push({fromR:c,fromC:i,toR:c+u,toC:i,capture:!1}),[-1,1].forEach(r=>{if(isOnBoard(c+u,i+r,t,o)){var s=getPieceAt(e,c+u,i+r);s&&s.color===l&&a.push({fromR:c,fromC:i,toR:c+u,toC:i+r,capture:!0})}})}return a}function applyMove(e,r){var t=e.filter(e=>!(e.row===r.toR&&e.col===r.toC));return t=t.map(e=>e.row===r.fromR&&e.col===r.fromC?{...e,row:r.toR,col:r.toC}:e)}function hasKing(e,r){return e.some(e=>"king"===e.type&&e.color===r)}function isInCheck(e,r,t,o){var a=e.find(e=>"king"===e.type&&e.color===r);if(!a)return!1;var s=opponent(r);return e.filter(e=>e.color===s).some(r=>getLegalMoves(e,r,t,o).some(e=>e.toR===a.row&&e.toC===a.col))}function getAllLegalMoves(e,r,t,o){var a=hasKing(e,r),s=[];for(const n of e.filter(e=>e.color===r))for(const c of getLegalMoves(e,n,t,o))a&&isInCheck(applyMove(e,c),r,t,o)||s.push(c);return s}function isCheckmate(e,r,t,o){return isInCheck(e,r,t,o)&&0===getAllLegalMoves(e,r,t,o).length}function isStalemate(e,r,t,o){return!isInCheck(e,r,t,o)&&0===getAllLegalMoves(e,r,t,o).length}function evaluate(e,r,t,o){var a=opponent(r);if(isCheckmate(e,a,t,o))return 1e5;if(isCheckmate(e,r,t,o))return-1e5;if(isStalemate(e,a,t,o))return-5e3;if(isStalemate(e,r,t,o))return-5e3;var s=0;for(const t of e){var n=PIECE_VALUES[t.type]||0;s+=t.color===r?n:-n}return s+=2*getAllLegalMoves(e,r,t,o).length,s-=2*getAllLegalMoves(e,a,t,o).length,isInCheck(e,a,t,o)&&(s+=50),s}function scoreLabel(e){return e>9e4?"⚡ Checkmate found!":e>0?"↑ Winning advantage":0===e?"= Equal":"↓ Losing"}function heuristic(e,r,t,o){var a=opponent(r),s=e.find(e=>"king"===e.type&&e.color===a);if(!s)return 0;var n=0;for(const a of e.filter(e=>e.color===r))for(const r of getLegalMoves(e,a,t,o)){var c=Math.max(Math.abs(r.toR-s.row),Math.abs(r.toC-s.col));n+=c<=1?30:Math.max(0,10-2*c)}return n}function search(e,r,t,o,a,s,n,c){var i=o?a:opponent(a);if(hasKing(e,a)&&!hasKing(e,opponent(a)))return{score:1e5-10*(t-r),path:c};if(!hasKing(e,a)&&hasKing(e,opponent(a)))return{score:10*(t-r)-1e5,path:c};if(isCheckmate(e,i,s,n))return{score:o?10*(t-r)-1e5:1e5-10*(t-r),path:c};if(isStalemate(e,i,s,n))return{score:0,path:c};if(0===r)return{score:evaluate(e,a,s,n)+heuristic(e,a,s,n),path:c};var l=getAllLegalMoves(e,i,s,n);if(0===l.length)return{score:0,path:c};var p=l.map(r=>({move:r,h:heuristic(applyMove(e,r),a,s,n)+(r.capture?200:0)})).sort((e,r)=>o?r.h-e.h:e.h-r.h),h=o?-1/0:1/0,u=c;for(const{move:i}of p){var f=applyMove(e,i),v=search(f,r-1,t,!o,a,s,n,[...c,{move:i,pieces:f}]);o?v.score>h&&(h=v.score,u=v.path):v.score<h&&(h=v.score,u=v.path)}return{score:h,path:u}}var MinimaxSolver={name:"Minimax (pure)",description:"Pure minimax, no pruning — exhaustive search, slow at depth > 3",depthLimit:3,solve(e,r){var{pieces:t,rows:o,cols:a,firstTo:s}=e,{maxDepth:n}=r,{score:c,path:i}=search(JSON.parse(JSON.stringify(t)),n,n,!0,s,o,a,[]);return{path:i,score:c,label:scoreLabel(c)}}},progressCb=null,searchStats={nodes:0,pruned:0,ttHits:0,startTime:0},PROGRESS_EVERY=1e3;function setProgressCallback(e){progressCb=e}var FLAG_EXACT=0,FLAG_LOWER=1,FLAG_UPPER=2,TT_MAX=5e5,tt=new Map;function boardKey(e,r){return e.map(e=>`${e.color[0]}${e.type[0]}${e.row},${e.col}`).sort().join("|")+(r?"+":"-")}function mvvLva(e,r){if(!e.capture)return 0;var t=r.find(r=>r.row===e.fromR&&r.col===e.fromC),o=r.find(r=>r.row===e.toR&&r.col===e.toC),a=t?PIECE_VALUES[t.type]:0;return 1e4+(o?PIECE_VALUES[o.type]:0)-.1*a}function search(e,r,t,o,a,s,n,c,i,l){var p=s?n:opponent(n);if(searchStats.nodes++,progressCb&&searchStats.nodes%PROGRESS_EVERY===0&&progressCb({nodes:searchStats.nodes,pruned:searchStats.pruned,ttHits:searchStats.ttHits,elapsed:Date.now()-searchStats.startTime,depth:t-r,maxDepth:t}),!hasKing(e,opponent(n)))return{score:1e5-10*(t-r),path:l};if(!hasKing(e,n))return{score:10*(t-r)-1e5,path:l};var h=getAllLegalMoves(e,p,c,i);if(0===h.length)return isInCheck(e,p,c,i)?{score:s?10*(t-r)-1e5:1e5-10*(t-r),path:l}:{score:0,path:l};if(0===r)return{score:evaluate(e,n,c,i),path:l};var u=boardKey(e,s),f=tt.get(u);if(f&&f.depth>=r){if(searchStats.ttHits++,f.flag===FLAG_EXACT)return{score:f.score,path:l};if(f.flag===FLAG_LOWER&&(o=Math.max(o,f.score)),f.flag===FLAG_UPPER&&(a=Math.min(a,f.score)),a<=o)return{score:f.score,path:l}}var v=h.map(r=>({move:r,score:mvvLva(r,e)})).sort((e,r)=>s?r.score-e.score:e.score-r.score),g=s?-1/0:1/0,m=l,C=o;for(const{move:p}of v){var d=applyMove(e,p),E=search(d,r-1,t,o,a,!s,n,c,i,[...l,{move:p,pieces:d}]);if(s?(E.score>g&&(g=E.score,m=E.path),o=Math.max(o,g)):(E.score<g&&(g=E.score,m=E.path),a=Math.min(a,g)),a<=o){searchStats.pruned++;break}}if(tt.size<TT_MAX){var S=g<=C?FLAG_UPPER:g>=a?FLAG_LOWER:FLAG_EXACT;tt.set(u,{score:g,depth:r,flag:S})}return{score:g,path:m}}var AlphaBetaSolver={name:"Alpha-Beta + A*",description:"Alpha-beta pruning with MVV-LVA ordering and transposition table",solve(e,r){var{pieces:t,rows:o,cols:a,firstTo:s}=e,{maxDepth:n}=r;tt=new Map,searchStats={nodes:0,pruned:0,ttHits:0,startTime:Date.now()};var{score:c,path:i}=search(t,n,n,-1/0,1/0,!0,s,o,a,[]);return{path:i,score:c,label:scoreLabel(c)}}};progressCb=null,searchStats={nodes:0,pruned:0,startTime:0},PROGRESS_EVERY=1e3;function setProgressCallback(e){progressCb=e}var MAG_WEIGHT=5,SQR_WEIGHT=.5;function evaluateCustom(e,r,t,o){var a=opponent(r),s=0;for(const t of e){var n=t.magnitude??Math.sqrt(t.col**2+t.row**2),c=t.sqrMagnitude??t.col**2+t.row**2,i=(PIECE_VALUES[t.type]||0)+n*MAG_WEIGHT+c*SQR_WEIGHT;s+=t.color===r?i:-i}return s+=2*getAllLegalMoves(e,r,t,o).length,s-=2*getAllLegalMoves(e,a,t,o).length,isInCheck(e,a,t,o)&&(s+=50),s}function mvvLva(e,r){if(!e.capture)return 0;var t=r.find(r=>r.row===e.fromR&&r.col===e.fromC),o=r.find(r=>r.row===e.toR&&r.col===e.toC),a=t&&PIECE_VALUES[t.type]||0;return 1e4+(o&&PIECE_VALUES[o.type]||0)-.1*a}function search(e,r,t,o,a,s,n,c,i,l){var p=s?n:opponent(n);if(searchStats.nodes++,progressCb&&searchStats.nodes%PROGRESS_EVERY===0&&progressCb({nodes:searchStats.nodes,pruned:searchStats.pruned,ttHits:0,elapsed:Date.now()-searchStats.startTime,depth:t-r,maxDepth:t}),!hasKing(e,opponent(n)))return{score:1e5-10*(t-r),path:l};var h=getAllLegalMoves(e,p,c,i);if(0===h.length)return isInCheck(e,p,c,i)?{score:s?10*(t-r)-1e5:1e5-10*(t-r),path:l}:{score:0,path:l};if(0===r)return{score:evaluateCustom(e,n,c,i),path:l};var u=h.map(r=>({move:r,score:mvvLva(r,e)})).sort((e,r)=>s?r.score-e.score:e.score-r.score),f=s?-1/0:1/0,v=l;for(const{move:p}of u){var g=applyMove(e,p),m=search(g,r-1,t,o,a,!s,n,c,i,[...l,{move:p,pieces:g}]);if(s?(m.score>f&&(f=m.score,v=m.path),o=Math.max(o,f)):(m.score<f&&(f=m.score,v=m.path),a=Math.min(a,f)),a<=o){searchStats.pruned++;break}}return{score:f,path:v}}var CustomSolver={name:"Custom",description:"Alpha-beta + magnitude scoring + iterative deepening, no king required",solve(e,r){var{pieces:t,rows:o,cols:a,firstTo:s}=e,{maxDepth:n}=r;searchStats={nodes:0,pruned:0,startTime:Date.now()};var c={path:[],score:-1/0,label:scoreLabel(-1/0)};for(let e=1;e<=n;e++){var{score:i,path:l}=search(t,e,e,-1/0,1/0,!0,s,o,a,[]);if(c={path:l,score:i,label:scoreLabel(i)},progressCb&&progressCb({nodes:searchStats.nodes,pruned:searchStats.pruned,ttHits:0,elapsed:Date.now()-searchStats.startTime,depth:e,maxDepth:n}),i>9e4)break}return c}},SOLVERS={alphabeta:AlphaBetaSolver,minimax:MinimaxSolver,custom:CustomSolver};self.onmessage=({data:e})=>{var{algKey:r,boardState:t,options:o,invalidCells:a}=e;setInvalidCells(a||[]),setPlayerColor(t.firstTo||"white");var s=e=>self.postMessage({type:"progress",stats:e});"alphabeta"===r&&setAlphaBetaProgress(s),"custom"===r&&setCustomProgress(s);var n=SOLVERS[r];if(n)try{var c=n.solve(t,o);self.postMessage({type:"done",result:c})}catch(e){self.postMessage({type:"error",message:e.message})}else self.postMessage({type:"error",message:`Unknown algorithm: ${r}`})};var setAlphaBetaProgress=setProgressCallback,setCustomProgress=setProgressCallback;\n',PIECE_VALUES={king:1e4,queen:900,rook:500,bishop:330,knight:320,pawn:100};function opponent(e){return"white"===e?"black":"white"}function getPieceAt(e,t,o){return e.find(e=>e.row===t&&e.col===o)||null}var invalidCells=[],playerColor="white";function setInvalidCells(e){invalidCells=e}function setPlayerColor(e){playerColor=e}function isOnBoard(e,t,o,s){return!invalidCells.some(o=>o.r===e&&o.c===t)&&(e>=0&&e<o&&t>=0&&t<s)}function getLegalMoves(e,t,o,s){var a=[],{type:r,color:I,row:i,col:g}=t,c=opponent(I),n=(t,r)=>{if(!isOnBoard(t,r,o,s))return!1;var I=getPieceAt(e,t,r);return I?(I.color===c&&a.push({fromR:i,fromC:g,toR:t,toC:r,capture:!0}),!1):(a.push({fromR:i,fromC:g,toR:t,toC:r,capture:!1}),!0)},C=(t,r)=>{for(var I=i+t,n=g+r;isOnBoard(I,n,o,s);){var C=getPieceAt(e,I,n);if(C){C.color===c&&a.push({fromR:i,fromC:g,toR:I,toC:n,capture:!0});break}a.push({fromR:i,fromC:g,toR:I,toC:n,capture:!1}),I+=t,n+=r}};if("rook"===r&&[[1,0],[-1,0],[0,1],[0,-1]].forEach(([e,t])=>C(e,t)),"bishop"===r&&[[1,1],[1,-1],[-1,1],[-1,-1]].forEach(([e,t])=>C(e,t)),"queen"===r&&[[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]].forEach(([e,t])=>C(e,t)),"knight"===r&&[[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]].forEach(([e,t])=>n(i+e,g+t)),"king"===r&&[[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]].forEach(([e,t])=>n(i+e,g+t)),"pawn"===r){var M=I===playerColor?-1:1;isOnBoard(i+M,g,o,s)&&!getPieceAt(e,i+M,g)&&a.push({fromR:i,fromC:g,toR:i+M,toC:g,capture:!1}),[-1,1].forEach(t=>{if(isOnBoard(i+M,g+t,o,s)){var r=getPieceAt(e,i+M,g+t);r&&r.color===c&&a.push({fromR:i,fromC:g,toR:i+M,toC:g+t,capture:!0})}})}return a}function applyMove(e,t){var o=e.filter(e=>!(e.row===t.toR&&e.col===t.toC));return o=o.map(e=>e.row===t.fromR&&e.col===t.fromC?{...e,row:t.toR,col:t.toC}:e)}function hasKing(e,t){return e.some(e=>"king"===e.type&&e.color===t)}function isInCheck(e,t,o,s){var a=e.find(e=>"king"===e.type&&e.color===t);if(!a)return!1;var r=opponent(t);return e.filter(e=>e.color===r).some(t=>getLegalMoves(e,t,o,s).some(e=>e.toR===a.row&&e.toC===a.col))}function getAllLegalMoves(e,t,o,s){var a=hasKing(e,t),r=[];for(const I of e.filter(e=>e.color===t))for(const i of getLegalMoves(e,I,o,s))a&&isInCheck(applyMove(e,i),t,o,s)||r.push(i);return r}function isCheckmate(e,t,o,s){return isInCheck(e,t,o,s)&&0===getAllLegalMoves(e,t,o,s).length}function isStalemate(e,t,o,s){return!isInCheck(e,t,o,s)&&0===getAllLegalMoves(e,t,o,s).length}function evaluate(e,t,o,s){var a=opponent(t);if(isCheckmate(e,a,o,s))return 1e5;if(isCheckmate(e,t,o,s))return-1e5;if(isStalemate(e,a,o,s))return-5e3;if(isStalemate(e,t,o,s))return-5e3;var r=0;for(const o of e){var I=PIECE_VALUES[o.type]||0;r+=o.color===t?I:-I}return r+=2*getAllLegalMoves(e,t,o,s).length,r-=2*getAllLegalMoves(e,a,o,s).length,isInCheck(e,a,o,s)&&(r+=50),r}function scoreLabel(e){return e>9e4?"⚡ Checkmate found!":e>0?"↑ Winning advantage":0===e?"= Equal":"↓ Losing"}function heuristic(e,t,o,s){var a=opponent(t),r=e.find(e=>"king"===e.type&&e.color===a);if(!r)return 0;var I=0;for(const a of e.filter(e=>e.color===t))for(const t of getLegalMoves(e,a,o,s)){var i=Math.max(Math.abs(t.toR-r.row),Math.abs(t.toC-r.col));I+=i<=1?30:Math.max(0,10-2*i)}return I}function search(e,t,o,s,a,r,I,i){var g=s?a:opponent(a);if(hasKing(e,a)&&!hasKing(e,opponent(a)))return{score:1e5-10*(o-t),path:i};if(!hasKing(e,a)&&hasKing(e,opponent(a)))return{score:10*(o-t)-1e5,path:i};if(isCheckmate(e,g,r,I))return{score:s?10*(o-t)-1e5:1e5-10*(o-t),path:i};if(isStalemate(e,g,r,I))return{score:0,path:i};if(0===t)return{score:evaluate(e,a,r,I)+heuristic(e,a,r,I),path:i};var c=getAllLegalMoves(e,g,r,I);if(0===c.length)return{score:0,path:i};var n=c.map(t=>({move:t,h:heuristic(applyMove(e,t),a,r,I)+(t.capture?200:0)})).sort((e,t)=>s?t.h-e.h:e.h-t.h),C=s?-1/0:1/0,M=i;for(const{move:g}of n){var l=applyMove(e,g),A=search(l,t-1,o,!s,a,r,I,[...i,{move:g,pieces:l}]);s?A.score>C&&(C=A.score,M=A.path):A.score<C&&(C=A.score,M=A.path)}return{score:C,path:M}}var MinimaxSolver={name:"Minimax (pure)",description:"Pure minimax, no pruning — exhaustive search, slow at depth > 3",depthLimit:3,solve(e,t){var{pieces:o,rows:s,cols:a,firstTo:r}=e,{maxDepth:I}=t,{score:i,path:g}=search(JSON.parse(JSON.stringify(o)),I,I,!0,r,s,a,[]);return{path:g,score:i,label:scoreLabel(i)}}},progressCb=null,searchStats={nodes:0,pruned:0,ttHits:0,startTime:0},PROGRESS_EVERY=1e3;function setProgressCallback(e){progressCb=e}var FLAG_EXACT=0,FLAG_LOWER=1,FLAG_UPPER=2,TT_MAX=5e5,tt=new Map;function boardKey(e,t){return e.map(e=>`${e.color[0]}${e.type[0]}${e.row},${e.col}`).sort().join("|")+(t?"+":"-")}function mvvLva(e,t){if(!e.capture)return 0;var o=t.find(t=>t.row===e.fromR&&t.col===e.fromC),s=t.find(t=>t.row===e.toR&&t.col===e.toC),a=o?PIECE_VALUES[o.type]:0;return 1e4+(s?PIECE_VALUES[s.type]:0)-.1*a}function search(e,t,o,s,a,r,I,i,g,c){var n=r?I:opponent(I);if(searchStats.nodes++,progressCb&&searchStats.nodes%PROGRESS_EVERY===0&&progressCb({nodes:searchStats.nodes,pruned:searchStats.pruned,ttHits:searchStats.ttHits,elapsed:Date.now()-searchStats.startTime,depth:o-t,maxDepth:o}),!hasKing(e,opponent(I)))return{score:1e5-10*(o-t),path:c};if(!hasKing(e,I))return{score:10*(o-t)-1e5,path:c};var C=getAllLegalMoves(e,n,i,g);if(0===C.length)return isInCheck(e,n,i,g)?{score:r?10*(o-t)-1e5:1e5-10*(o-t),path:c}:{score:0,path:c};if(0===t)return{score:evaluate(e,I,i,g),path:c};var M=boardKey(e,r),l=tt.get(M);if(l&&l.depth>=t){if(searchStats.ttHits++,l.flag===FLAG_EXACT)return{score:l.score,path:c};if(l.flag===FLAG_LOWER&&(s=Math.max(s,l.score)),l.flag===FLAG_UPPER&&(a=Math.min(a,l.score)),a<=s)return{score:l.score,path:c}}var A=C.map(t=>({move:t,score:mvvLva(t,e)})).sort((e,t)=>r?t.score-e.score:e.score-t.score),N=r?-1/0:1/0,u=c,L=s;for(const{move:n}of A){var j=applyMove(e,n),m=search(j,t-1,o,s,a,!r,I,i,g,[...c,{move:n,pieces:j}]);if(r?(m.score>N&&(N=m.score,u=m.path),s=Math.max(s,N)):(m.score<N&&(N=m.score,u=m.path),a=Math.min(a,N)),a<=s){searchStats.pruned++;break}}if(tt.size<TT_MAX){var p=N<=L?FLAG_UPPER:N>=a?FLAG_LOWER:FLAG_EXACT;tt.set(M,{score:N,depth:t,flag:p})}return{score:N,path:u}}var AlphaBetaSolver={name:"Alpha-Beta + A*",description:"Alpha-beta pruning with MVV-LVA ordering and transposition table",solve(e,t){var{pieces:o,rows:s,cols:a,firstTo:r}=e,{maxDepth:I}=t;tt=new Map,searchStats={nodes:0,pruned:0,ttHits:0,startTime:Date.now()};var{score:i,path:g}=search(o,I,I,-1/0,1/0,!0,r,s,a,[]);return{path:g,score:i,label:scoreLabel(i)}}};progressCb=null,searchStats={nodes:0,pruned:0,startTime:0},PROGRESS_EVERY=1e3;function setProgressCallback(e){progressCb=e}var MAG_WEIGHT=5,SQR_WEIGHT=.5;function evaluateCustom(e,t,o,s){var a=opponent(t),r=0;for(const o of e){var I=o.magnitude??Math.sqrt(o.col**2+o.row**2),i=o.sqrMagnitude??o.col**2+o.row**2,g=(PIECE_VALUES[o.type]||0)+I*MAG_WEIGHT+i*SQR_WEIGHT;r+=o.color===t?g:-g}return r+=2*getAllLegalMoves(e,t,o,s).length,r-=2*getAllLegalMoves(e,a,o,s).length,isInCheck(e,a,o,s)&&(r+=50),r}function mvvLva(e,t){if(!e.capture)return 0;var o=t.find(t=>t.row===e.fromR&&t.col===e.fromC),s=t.find(t=>t.row===e.toR&&t.col===e.toC),a=o&&PIECE_VALUES[o.type]||0;return 1e4+(s&&PIECE_VALUES[s.type]||0)-.1*a}function search(e,t,o,s,a,r,I,i,g,c){var n=r?I:opponent(I);if(searchStats.nodes++,progressCb&&searchStats.nodes%PROGRESS_EVERY===0&&progressCb({nodes:searchStats.nodes,pruned:searchStats.pruned,ttHits:0,elapsed:Date.now()-searchStats.startTime,depth:o-t,maxDepth:o}),!hasKing(e,opponent(I)))return{score:1e5-10*(o-t),path:c};var C=getAllLegalMoves(e,n,i,g);if(0===C.length)return isInCheck(e,n,i,g)?{score:r?10*(o-t)-1e5:1e5-10*(o-t),path:c}:{score:0,path:c};if(0===t)return{score:evaluateCustom(e,I,i,g),path:c};var M=C.map(t=>({move:t,score:mvvLva(t,e)})).sort((e,t)=>r?t.score-e.score:e.score-t.score),l=r?-1/0:1/0,A=c;for(const{move:n}of M){var N=applyMove(e,n),u=search(N,t-1,o,s,a,!r,I,i,g,[...c,{move:n,pieces:N}]);if(r?(u.score>l&&(l=u.score,A=u.path),s=Math.max(s,l)):(u.score<l&&(l=u.score,A=u.path),a=Math.min(a,l)),a<=s){searchStats.pruned++;break}}return{score:l,path:A}}var CustomSolver={name:"Custom",description:"Alpha-beta + magnitude scoring + iterative deepening, no king required",solve(e,t){var{pieces:o,rows:s,cols:a,firstTo:r}=e,{maxDepth:I}=t;searchStats={nodes:0,pruned:0,startTime:Date.now()};var i={path:[],score:-1/0,label:scoreLabel(-1/0)};for(let e=1;e<=I;e++){var{score:g,path:c}=search(o,e,e,-1/0,1/0,!0,r,s,a,[]);if(i={path:c,score:g,label:scoreLabel(g)},progressCb&&progressCb({nodes:searchStats.nodes,pruned:searchStats.pruned,ttHits:0,elapsed:Date.now()-searchStats.startTime,depth:e,maxDepth:I}),g>9e4)break}return i}},SOLVERS={alphabeta:AlphaBetaSolver,minimax:MinimaxSolver,custom:CustomSolver},algSelect=document.getElementById("inp-algorithm");Object.entries(SOLVERS).forEach(([e,t])=>{var o=document.createElement("option");o.value=e,o.textContent=t.name,o.title=t.description,algSelect.appendChild(o)}),algSelect.value="custom";var PIECE_TYPES=["king","queen","rook","bishop","knight","pawn"],SYMBOLS={white:{king:"♔",queen:"♕",rook:"♖",bishop:"♗",knight:"♘",pawn:"♙"},black:{king:"♚",queen:"♛",rook:"♜",bishop:"♝",knight:"♞",pawn:"♟"}},PIECE_SRCS={"white-king":"data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9Im5vIj8+DQo8c3ZnDQogICB3aWR0aD0iMjYwIg0KICAgaGVpZ2h0PSIyNjAiDQogICB4bWw6c3BhY2U9InByZXNlcnZlIg0KICAgb3ZlcmZsb3c9ImhpZGRlbiINCiAgIHZlcnNpb249IjEuMSINCiAgIGlkPSJzdmcxOTkzIg0KICAgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIg0KICAgeG1sbnM6c3ZnPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnMNCiAgICAgaWQ9ImRlZnMxOTg1Ij48Y2xpcFBhdGgNCiAgICAgICBpZD0iY2xpcDAiPjxyZWN0DQogICAgICAgICB4PSIyNDYwIg0KICAgICAgICAgeT0iMTc1NyINCiAgICAgICAgIHdpZHRoPSIyNjAiDQogICAgICAgICBoZWlnaHQ9IjI2MCINCiAgICAgICAgIGlkPSJyZWN0MTk4MiIgLz48L2NsaXBQYXRoPjwvZGVmcz48Zw0KICAgICBjbGlwLXBhdGg9InVybCgjY2xpcDApIg0KICAgICB0cmFuc2Zvcm09Im1hdHJpeCgwLjksMCwwLDAuOSwtMjIwMS4wMTE2LC0xNTY4LjQpIg0KICAgICBpZD0iZzE5OTEiPjxwYXRoDQogICAgICAgc3R5bGU9ImNvbG9yOiMwMDAwMDA7ZmlsbDojMjYyNjI2O2ZpbGwtcnVsZTpldmVub2RkO3N0cm9rZS1taXRlcmxpbWl0Ojg7LWlua3NjYXBlLXN0cm9rZTpub25lIg0KICAgICAgIGQ9Im0gMjU4OSwxNzY3LjE4NzUgYyAtMjIuNTA2NSwwIC00MC44MTI1LDE4LjcwNyAtNDAuODEyNSw0MS4zMTI1IDAsMjIuNjA1NSAxOC4zMDYsNDEuMzEyNSA0MC44MTI1LDQxLjMxMjUgMjIuNTA2NSwwIDQwLjgxMjUsLTE4LjcwNyA0MC44MTI1LC00MS4zMTI1IDAsLTIyLjYwNTUgLTE4LjMwNiwtNDEuMzEyNSAtNDAuODEyNSwtNDEuMzEyNSB6Ig0KICAgICAgIGlkPSJwYXRoMTAyNyIgLz48cGF0aA0KICAgICAgIHN0eWxlPSJjb2xvcjojMDAwMDAwO2ZpbGw6IzI2MjYyNjtmaWxsLXJ1bGU6ZXZlbm9kZDtzdHJva2UtbWl0ZXJsaW1pdDo4Oy1pbmtzY2FwZS1zdHJva2U6bm9uZSINCiAgICAgICBkPSJtIDI1MjguNzA1MSwxODQyLjI0NDEgYyAtMjguNzg4NywwLjc0NDEgLTUyLjQ2OCwyNS4xMDU2IC01Ny42Mzg3LDUyLjU1NDUgLTYuODEwMywzMy40MDM3IDYuMjUwMyw2Ny41OTI2IDI0Ljc3OTUsOTQuOTg5NCAzLjc3OTksNS4wMDgxIDcuNTU5OCwxMC4wMTYzIDExLjMzOTcsMTUuMDI0NSA1NS4yMTA5LDAgMTEwLjQyMTksMCAxNjUuNjMyOCwwIDkuMzIxOCwtMTIuMDQwMSAxOC41OTksLTI0LjIzOCAyNC42OTA0LC0zOC4zMjI5IDEzLjYxOSwtMjguNDk1MyAxOS4yOCwtNjMuODk0NiAzLjQzMzIsLTkyLjcyNDMgLTEyLjQ0MzksLTIzLjg4NCAtNDIuMDgzMiwtMzcuMjg3OSAtNjguMDY1OCwtMjkuMjg5NyAtMTguNjA3NSw1LjIzNTcgLTMzLjM1ODUsMTkuNTQ1IC00Mi44OTU3LDM1LjkzNDYgLTEyLjU4NjgsLTIxLjYxOTEgLTM1LjE4MTksLTM5LjI2MDMgLTYxLjI3NTQsLTM4LjE2NjEgeiINCiAgICAgICBpZD0icGF0aDEwMjkiIC8+PHBhdGgNCiAgICAgICBpZD0icGF0aDE5ODciDQogICAgICAgc3R5bGU9ImZpbGw6I2ZmZmZmZjtmaWxsLW9wYWNpdHk6MTtzdHJva2U6bm9uZSINCiAgICAgICBkPSJtIDI1ODksMTc4Ny44MTI1IGMgLTExLjE3MzQsMCAtMjAuMTg3NSw5LjA1MzEgLTIwLjE4NzUsMjAuNjg3NSAwLDExLjYzNDQgOS4wMTQxLDIwLjY4NzUgMjAuMTg3NSwyMC42ODc1IDExLjE3MzQsMCAyMC4xODc1LC05LjA1MzEgMjAuMTg3NSwtMjAuNjg3NSAwLC0xMS42MzQ0IC05LjAxNDEsLTIwLjY4NzUgLTIwLjE4NzUsLTIwLjY4NzUgeiIgLz48cGF0aA0KICAgICAgIGlkPSJwYXRoMTk4OSINCiAgICAgICBzdHlsZT0iZmlsbDojZmZmZmZmO2ZpbGwtb3BhY2l0eToxO3N0cm9rZTpub25lIg0KICAgICAgIGQ9Im0gMjY0Ny45NzA3LDE4NjIuNzgxMiBjIC0xNy42NTI0LDAuMjE0MSAtMzAuODU3NiwxMy45MDY3IC00MC4zMTk5LDI3LjM3MzcgLTUuODUzLDcuOTgyNSAtMTAuNzUxNiwxNi42MDcxIC0xNi43MDE2LDI0LjUyMDkgLTkuNzEyMywtMTIuNDI0NSAtMTYuOTE3MiwtMjYuODI3NSAtMjguODU0NSwtMzcuNDM4NSAtMTAuOTk0OCwtMTAuODg5OSAtMjcuNTg1NSwtMTguMTM5OCAtNDIuOTAyNCwtMTIuNDYzMiAtMTkuMjYsNi4zNzU0IC0yOS4yOTg1LDI3LjMxNTEgLTI5LjM1OTMsNDYuNTc2NyAtMC4yNjk0LDI0LjM2NTggOS45Nzg0LDQ3Ljc3NTIgMjMuNjAxNyw2Ny41MDY0IDEuOTk5OSwxLjcwOSAyLjc0NDIsNS45Mzg1IDUuODk4NSw1LjMzMDMgNDcuNzM2NiwwIDk1LjQ3MzIsMCAxNDMuMjA5OCwwIDEzLjEyLC0xNi43MTE3IDIyLjc2MjYsLTM2LjQ3IDI2LjcwMzUsLTU3LjQwNzMgMy44Nzc4LC0yMC4yOTc4IC0wLjkyOTQsLTQ0LjIzOTIgLTE4LjU0MzcsLTU2Ljg2MDIgLTYuNTUxLC00LjczMzQgLTE0LjYyNDcsLTcuNDE2NiAtMjIuNzMyMSwtNy4xMzg4IHoiIC8+PC9nPjwvc3ZnPg0K","white-queen":"data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9Im5vIj8+DQo8c3ZnDQogICB3aWR0aD0iMjYwIg0KICAgaGVpZ2h0PSIyNjAiDQogICB4bWw6c3BhY2U9InByZXNlcnZlIg0KICAgb3ZlcmZsb3c9ImhpZGRlbiINCiAgIHZlcnNpb249IjEuMSINCiAgIGlkPSJzdmcxNDY2Ig0KICAgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIg0KICAgeG1sbnM6c3ZnPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnMNCiAgICAgaWQ9ImRlZnMxNDYwIj48Y2xpcFBhdGgNCiAgICAgICBpZD0iY2xpcDAiPjxyZWN0DQogICAgICAgICB4PSIyMjAwIg0KICAgICAgICAgeT0iMTc1NyINCiAgICAgICAgIHdpZHRoPSIyNjAiDQogICAgICAgICBoZWlnaHQ9IjI2MCINCiAgICAgICAgIGlkPSJyZWN0MTQ1NyIgLz48L2NsaXBQYXRoPjwvZGVmcz48Zw0KICAgICBjbGlwLXBhdGg9InVybCgjY2xpcDApIg0KICAgICB0cmFuc2Zvcm09Im1hdHJpeCgwLjksMCwwLDAuOSwtMTk2Ni45NSwtMTU2OC4yMDgpIg0KICAgICBpZD0iZzE0NjQiPjxwYXRoDQogICAgICAgc3R5bGU9ImNvbG9yOiMwMDAwMDA7ZmlsbDojMjYyNjI2O2ZpbGwtcnVsZTpldmVub2RkO3N0cm9rZS1taXRlcmxpbWl0Ojg7LWlua3NjYXBlLXN0cm9rZTpub25lIg0KICAgICAgIGQ9Ik0gMTA1LC0yMi40NzI2NTYgNTguNzc1MzkxLDY3LjAyNTM5MSAtMTMuOTg0Mzc1LC0xNS4wMzUxNTYgMTIuMDY2NDA2LDIxMS4zMTI1IEggMTk3LjkzMzU5IGwgMjYuMDUwNzgsLTIyNi4zNDc2NTYgLTcyLjc1OTc2LDgyLjA2MDU0NyB6Ig0KICAgICAgIGlkPSJwYXRoMTMzIg0KICAgICAgIHRyYW5zZm9ybT0ibWF0cml4KC0xLDAsMCwxLDI0MzUuNSwxNzkzLjUpIiAvPjxwYXRoDQogICAgICAgaWQ9InBhdGgxNDYyIg0KICAgICAgIHN0eWxlPSJmaWxsOiNmZmZmZmY7ZmlsbC1vcGFjaXR5OjE7c3Ryb2tlOm5vbmUiDQogICAgICAgZD0iTSAxMDUsMjIuNDcyNjU2IDE0Ni43MDExNywxMDMuMjEyODkgMTk2LjAxNTYyLDQ3LjU5NzY1NiAxNzkuNTQ0OTIsMTkwLjY4NzUgSCAzMC40NTUwNzggTCAxMy45ODQzNzUsNDcuNTk3NjU2IDYzLjI5ODgyOCwxMDMuMjEyODkgWiINCiAgICAgICB0cmFuc2Zvcm09Im1hdHJpeCgtMSwwLDAsMSwyNDM1LjUsMTc5My41KSIgLz48L2c+PC9zdmc+DQo=","white-rook":"data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9Im5vIj8+DQo8c3ZnDQogICB3aWR0aD0iMjYwIg0KICAgaGVpZ2h0PSIyNjAiDQogICB4bWw6c3BhY2U9InByZXNlcnZlIg0KICAgb3ZlcmZsb3c9ImhpZGRlbiINCiAgIHZlcnNpb249IjEuMSINCiAgIGlkPSJzdmcxNyINCiAgIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyINCiAgIHhtbG5zOnN2Zz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxkZWZzDQogICAgIGlkPSJkZWZzNSI+PGNsaXBQYXRoDQogICAgICAgaWQ9ImNsaXAwIj48cmVjdA0KICAgICAgICAgeD0iMTQyMCINCiAgICAgICAgIHk9IjE3NTciDQogICAgICAgICB3aWR0aD0iMjYwIg0KICAgICAgICAgaGVpZ2h0PSIyNjAiDQogICAgICAgICBpZD0icmVjdDIiIC8+PC9jbGlwUGF0aD48L2RlZnM+PGcNCiAgICAgY2xpcC1wYXRoPSJ1cmwoI2NsaXAwKSINCiAgICAgdHJhbnNmb3JtPSJtYXRyaXgoMC45LDAsMCwwLjksLTEyNjQuOSwtMTU2OC4yKSINCiAgICAgaWQ9ImcxNSI+PHBhdGgNCiAgICAgICBpZD0icGF0aDEwMzMiDQogICAgICAgc3R5bGU9ImNvbG9yOiMwMDAwMDA7ZmlsbDojMjYyNjI2O2ZpbGwtcnVsZTpldmVub2RkO3N0cm9rZS1taXRlcmxpbWl0Ojg7LWlua3NjYXBlLXN0cm9rZTpub25lIg0KICAgICAgIGQ9Im0gMTQ1NS4xODc1LDE3NzMuMTg3NSB2IDExNi42MjUgaCAzMC4wNDEgbCAtMTcuNzkxLDExMyBoIDEyLjA2MjUgMTU1LjA2MjUgbCAtMTcuNzkxLC0xMTMgaCAzMC4wNDEgdiAtMTE2LjYyNSB6IiAvPjxwYXRoDQogICAgICAgc3R5bGU9ImZpbGw6I2ZmZmZmZjtmaWxsLW9wYWNpdHk6MTtzdHJva2U6bm9uZSINCiAgICAgICBkPSJtIDE1MDYuMTA5NCwxODg5LjgxMjUgLTE0LjU0NDksOTIuMzc1IGggMTE4Ljg3MSBsIC0xNC41NDQ5LC05Mi4zNzUgeiINCiAgICAgICBpZD0icGF0aDEwMzgiIC8+PHBhdGgNCiAgICAgICBzdHlsZT0iZmlsbDojZmZmZmZmO2ZpbGwtb3BhY2l0eToxO3N0cm9rZTpub25lIg0KICAgICAgIGQ9Im0gMTQ3NS44MTI1LDE3OTMuODEyNSB2IDc1LjM3NSBoIDE1MC4zNzUgdiAtNzUuMzc1IGggLTM0LjM3NSB2IDMxLjY1ODIgaCAtMjAuNjI1IHYgLTMxLjY1ODIgaCAtNDAuMzc1IHYgMzEuNjU4MiBoIC0yMC42MjUgdiAtMzEuNjU4MiB6Ig0KICAgICAgIGlkPSJwYXRoNyIgLz48L2c+PC9zdmc+DQo=","white-bishop":"data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9Im5vIj8+DQo8c3ZnDQogICB3aWR0aD0iMjYwIg0KICAgaGVpZ2h0PSIyNjAiDQogICB4bWw6c3BhY2U9InByZXNlcnZlIg0KICAgb3ZlcmZsb3c9ImhpZGRlbiINCiAgIHZlcnNpb249IjEuMSINCiAgIGlkPSJzdmcxNSINCiAgIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyINCiAgIHhtbG5zOnN2Zz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxkZWZzDQogICAgIGlkPSJkZWZzNSI+PGNsaXBQYXRoDQogICAgICAgaWQ9ImNsaXAwIj48cmVjdA0KICAgICAgICAgeD0iMTY4MCINCiAgICAgICAgIHk9IjE3NTciDQogICAgICAgICB3aWR0aD0iMjYwIg0KICAgICAgICAgaGVpZ2h0PSIyNjAiDQogICAgICAgICBpZD0icmVjdDIiIC8+PC9jbGlwUGF0aD48L2RlZnM+PGcNCiAgICAgY2xpcC1wYXRoPSJ1cmwoI2NsaXAwKSINCiAgICAgdHJhbnNmb3JtPSJtYXRyaXgoMC45LDAsMCwwLjksLTE0OTguOSwtMTU2OC43NTA4KSINCiAgICAgaWQ9ImcxMyI+PHBhdGgNCiAgICAgICBpZD0icGF0aDExNzYiDQogICAgICAgc3R5bGU9ImNvbG9yOiMwMDAwMDA7ZmlsbDojMjYyNjI2O2ZpbGwtcnVsZTpldmVub2RkO3N0cm9rZS1taXRlcmxpbWl0Ojg7LWlua3NjYXBlLXN0cm9rZTpub25lIg0KICAgICAgIGQ9Im0gMTgwOS45NzA3LDE3NjAuMTg3NSBjIC0yMy44NjA5LC0wLjczMjcgLTQzLjkxMDEsMjMuODg4NCAtMzguMzM1NCw0Ny4xMTIzIC0wLjkzMSw1Ljc0NiA4LjE2OTIsMTAuODQ3NCAxLjgzMjYsMTQuODc2MiAtNC4wNjI0LDQuNjE0NSAtMTAuMTIyOCwxMS40OTQ3IC0xMi45MjksMTQuNjg3OSAtMTYuODQ4MywxNi4zNjI2IC0yNC40MTY3LDQzLjE5MzUgLTE4LjAzNjksNjYuNDI3MSAyLjk0ODUsMTEuNTI5NyA4Ljk1NTIsMjIuMjUxNiAxNy4yMzI0LDMwLjgwMDggLTE4LjAzNjUsMjMuNTczNiAtMzYuMDcyOSw0Ny4xNDcxIC01NC4xMDk0LDcwLjcyMDcgNzAuMjUsMCAxNDAuNSwwIDIxMC43NSwwIC0xOC4wMzY1LC0yMy41NzM2IC0zNi4wNzI5LC00Ny4xNDcxIC01NC4xMDk0LC03MC43MjA3IDIzLjczMTQsLTIzLjYxMSAyNS45Mzc1LC02NC42NzMzIDQuOTMzOCwtOTAuNzIyNSAtNC4zODQ4LC01LjM4NjkgLTYuMDUwOCwtNi42NDYzIC0xMC4wNTc3LC0xMS40MTQ0IC00LjI1NTUsLTQuODMxNCAtOC41MTExLC05LjY2MjcgLTEyLjc2NjcsLTE0LjQ5NCAxMS44NzY2LC0xOS41NzI5IDAuNDYzMiwtNDcuNzA2IC0yMC45OTEyLC01NC44Nzc4IC00LjI4MTksLTEuNTg2IC04Ljg0NzEsLTIuMzk4OCAtMTMuNDEzMSwtMi4zOTU2IHoiIC8+PHBhdGgNCiAgICAgICBzdHlsZT0iZmlsbDojZmZmZmZmO2ZpbGwtb3BhY2l0eToxO3N0cm9rZTpub25lIg0KICAgICAgIGQ9Im0gMTc3Ni4wNjI1LDE5NDYuNjk1MyBjIC05LjU2MjUsMTIuNDk3NCAtMTkuMTI1LDI0Ljk5NDggLTI4LjY4NzUsMzcuNDkyMiA0Mi40MTY3LDAgODQuODMzMywwIDEyNy4yNSwwIC05LjU2MjUsLTEyLjQ5NzQgLTE5LjEyNSwtMjQuOTk0OCAtMjguNjg3NSwtMzcuNDkyMiAtMjEuMjg5NiwxMi4wNjQyIC00OC41ODIsMTIuMDY1OSAtNjkuODc1LDAgeiINCiAgICAgICBpZD0icGF0aDExODEiIC8+PHBhdGgNCiAgICAgICBzdHlsZT0iZmlsbDojZmZmZmZmO2ZpbGwtb3BhY2l0eToxO3N0cm9rZTpub25lIg0KICAgICAgIGQ9Im0gMTgwOS45NzA3LDE3ODAuODEyNSBjIC0xMS4yNjE2LC0wLjQ1MTcgLTIwLjY3NDUsMTEuMDcwMyAtMTguMTcxLDIyLjAxNDcgMS4wMTU0LDQuODc0NiA0Ljg3MTYsOC40NDg5IDcuMjk5MSwxMi42NzE3IDAuNjc2MSwxLjgyNTYgMy42NzcsMy44MDI2IDIuODU5NCw1LjUzMDkgLTEwLjQ4ODksMTEuOTQxOSAtMjEuMDM3NiwyMy44NTAzIC0zMS41MTIzLDM1Ljc4OCAtMTMuMTk0MiwxNi45MTU2IC0xMi44NTMyLDQyLjU2MzggMC43NjMyLDU5LjEzNjMgMTMuNzg1NSwxOC4xNTc3IDQwLjQxMDcsMjQuNDYyNCA2MC45NDcyLDE0LjY3MDIgMTkuODY3OSwtOC43MTI4IDMyLjUxNzgsLTMxLjQ3NDYgMjguNDE2MywtNTIuOTM4MSAtMS40OTc0LC04LjczMzMgLTUuNDg2MywtMTcuMDAwNyAtMTEuMzA1LC0yMy42NzQ1IC05Ljc5MjMsMTAuMDY5IC0xOS41ODQ3LDIwLjEzODEgLTI5LjM3NywzMC4yMDcxIC00LjkyODQsLTQuNzkzNiAtOS44NTY3LC05LjU4NzMgLTE0Ljc4NTEsLTE0LjM4MDkgMTAuMTMwOCwtMTAuNDE2NyAyMC4yNjE3LC0yMC44MzMzIDMwLjM5MjUsLTMxLjI1IC01LjcwNDQsLTYuNDc1OSAtMTEuNDA4OCwtMTIuOTUxOCAtMTcuMTEzMiwtMTkuNDI3NyAyLjk4MjQsLTQuNjY3NyA2LjQyOTQsLTkuMTAwNCA5LjExMTIsLTEzLjkyMDEgNC4wMzg3LC0xMC42OTU3IC00LjE0MjQsLTIzLjYzMzMgLTE1LjYxNDgsLTI0LjMzMzIgbCAtMC45NDg0LC0wLjA3MSB6Ig0KICAgICAgIGlkPSJwYXRoNyIgLz48L2c+PC9zdmc+DQo=","white-knight":"data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9Im5vIj8+DQo8c3ZnDQogICB3aWR0aD0iMjYwIg0KICAgaGVpZ2h0PSIyNjAiDQogICB4bWw6c3BhY2U9InByZXNlcnZlIg0KICAgb3ZlcmZsb3c9ImhpZGRlbiINCiAgIHZlcnNpb249IjEuMSINCiAgIGlkPSJzdmc5NTEiDQogICB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciDQogICB4bWxuczpzdmc9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcw0KICAgICBpZD0iZGVmczkzOSI+PGNsaXBQYXRoDQogICAgICAgaWQ9ImNsaXAwIj48cmVjdA0KICAgICAgICAgeD0iMTk0MCINCiAgICAgICAgIHk9IjE3NTciDQogICAgICAgICB3aWR0aD0iMjYwIg0KICAgICAgICAgaGVpZ2h0PSIyNjAiDQogICAgICAgICBpZD0icmVjdDkzNiIgLz48L2NsaXBQYXRoPjwvZGVmcz48Zw0KICAgICBjbGlwLXBhdGg9InVybCgjY2xpcDApIg0KICAgICB0cmFuc2Zvcm09Im1hdHJpeCgwLjksMCwwLDAuOSwtMTczMi4zOTgxLC0xNTY4LjEzOTUpIg0KICAgICBpZD0iZzk0OSI+PHBhdGgNCiAgICAgICBpZD0icGF0aDE4MiINCiAgICAgICBzdHlsZT0iY29sb3I6IzAwMDAwMDtmaWxsOiMyNjI2MjY7ZmlsbC1ydWxlOmV2ZW5vZGQ7c3Ryb2tlLW1pdGVybGltaXQ6ODstaW5rc2NhcGUtc3Ryb2tlOm5vbmUiDQogICAgICAgZD0ibSAxOTkzLjQ5NjYsMTc3Mi4zOTc3IGMgMi40NDU4LDE0LjMzNTEgNC44OTE3LDI3LjE1NzcgNy4zMzc1LDQxLjQ5MjggLTEyLjU1MDYsLTMuMjA4MiAtMjUuNzczMywtNi45MjA1IC0zOC4zMjM5LC0xMC4xMjg3IDQuODg4NCwyMC45NzY5IDEwLjQ0OTEsNDMuOTcwMyAxNS4zMzc1LDY0Ljk0NzIgLTkuMzgxNSwxOC44NjU3IC0xMi4wNjY1LDQwLjExNjggLTE0LjQ3ODQsNjAuODExNyAtMi41NjUsMjUuMDEyNSAtMi4zMDY0LDUwLjE5MTUgLTEuNjE1NCw3NS4yOTE4IGggMTc5LjA3NDIgYyAtNy44OTc4LC0zMS41ODc5IC0xNS43OTU1LC02My4xNzU4IC0yMy42OTMzLC05NC43NjM3IDI0Ljk0OTQsLTcuOTEzNyA1Mi4wNTU3LC0xOC4xOTQ0IDY2Ljg1NTIsLTQxLjE0NzkgMTQuMjEyNywtMjMuNjE5MSA0LjcyOTcsLTU2LjM0NjMgLTE2LjM3NDIsLTcyLjY4NDUgLTIzLjg4ODYsLTE3LjYxMjkgLTU1LjU5MzMsLTE4LjIyMzIgLTgzLjkyODMsLTE1LjA5NDkgLTEwLjczOTcsMS4wNTIgLTIwLjk3MzcsNC4zMzkgLTMwLjY3NjIsOC45MjE2IC0xOS44MzgyLC01Ljg4MTggLTM5LjY3NjUsLTExLjc2MzYgLTU5LjUxNDcsLTE3LjY0NTQgeiIgLz48cGF0aA0KICAgICAgIGlkPSJwYXRoOTQxIg0KICAgICAgIHN0eWxlPSJmaWxsOiNmZmZmZmY7ZmlsbC1vcGFjaXR5OjE7c3Ryb2tlOm5vbmUiDQogICAgICAgZD0ibSAyMDE0LjMzNzksMTc5Ny45MTIxIGMgMy41NTUzLDEzLjY3MTkgNy4xMTA3LDI3LjM0MzcgMTAuNjY2LDQxLjAxNTYgLTEzLjM0NjQsLTQuMTQ1MiAtMjYuNjkyNywtOC4yOTAzIC00MC4wMzkxLC0xMi40MzU1IDUsMTQuMzM5OCAxMCwyOC42Nzk3IDE1LDQzLjAxOTUgLTQuNDA4NCwxMC40OTA3IC05Ljc5ODUsMjAuNjc5OSAtMTEuNDQxNCwzMi4wOTM4IC01LjY0MzEsMjcuMTE4OCAtNi43MjExLDU0Ljk1MzEgLTYuNDcwNyw4Mi41NzYxIGggMTMyLjM0OTYgYyAtNS43NjI0LC0yMy4wNDYyIC0xMS41MjQ3LC00Ni4wOTI0IC0xNy4yODcxLC02OS4xMzg2IGwgLTI4Ljg2NDUsMy4zMjQ3IGMgLTAuNzQ2NCwtNi4zMDE2IC0xLjQ5MjcsLTEyLjYwMzIgLTIuMjM5LC0xOC45MDQ4IDI4LjE5OTQsLTMuOTk0IDU2Ljk1NiwtMTAuMTQzMyA4MS43OTM2LC0yNC42Nzg3IDExLjM0MDMsLTYuOTA0NCAyNC4wMDgsLTE3LjY5MjUgMjIuMjMyNCwtMzIuNDYyNyAtMC4yNDE4LC0xMy43MDMxIC03LjY1NDYsLTI3LjE3NTcgLTIwLjIzMTEsLTMzLjIwODIgLTE5LjczNDMsLTEwLjAwNDYgLTQyLjk0MzMsLTkuOTE2MSAtNjQuNDI1NCwtNy4zODcyIC0xMS4zNzU4LDAuOTA4IC0yMS40NzQ5LDYuMjI4NSAtMzEuODQwNSwxMC40NjczIC0xMy4wNjc2LC00Ljc2MDQgLTI2LjEzNTIsLTkuNTIwOSAtMzkuMjAyOCwtMTQuMjgxMyB6IiAvPjxwYXRoDQogICAgICAgZD0ibSAyMDQwLDE4NTMgYyAwLC05Ljk0IDcuODQsLTE4IDE3LjUsLTE4IDkuNjYsMCAxNy41LDguMDYgMTcuNSwxOCAwLDkuOTQgLTcuODQsMTggLTE3LjUsMTggLTkuNjYsMCAtMTcuNSwtOC4wNiAtMTcuNSwtMTggeiINCiAgICAgICBmaWxsPSIjMjYyNjI2Ig0KICAgICAgIGZpbGwtcnVsZT0iZXZlbm9kZCINCiAgICAgICBpZD0icGF0aDk0NSIgLz48cGF0aA0KICAgICAgIGQ9Im0gMjA4MywxODMzLjUgYyAwLC05LjY2IDguMDYsLTE3LjUgMTgsLTE3LjUgOS45NCwwIDE4LDcuODQgMTgsMTcuNSAwLDkuNjcgLTguMDYsMTcuNSAtMTgsMTcuNSAtOS45NCwwIC0xOCwtNy44MyAtMTgsLTE3LjUgeiINCiAgICAgICBmaWxsPSIjMjYyNjI2Ig0KICAgICAgIGZpbGwtcnVsZT0iZXZlbm9kZCINCiAgICAgICBpZD0icGF0aDk0NyIgLz48L2c+PC9zdmc+DQo=","white-pawn":"data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9Im5vIj8+DQo8c3ZnDQogICB3aWR0aD0iMjYwIg0KICAgaGVpZ2h0PSIyNjAiDQogICB4bWw6c3BhY2U9InByZXNlcnZlIg0KICAgb3ZlcmZsb3c9ImhpZGRlbiINCiAgIHZlcnNpb249IjEuMSINCiAgIGlkPSJzdmcxMyINCiAgIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyINCiAgIHhtbG5zOnN2Zz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxkZWZzDQogICAgIGlkPSJkZWZzNSI+PGNsaXBQYXRoDQogICAgICAgaWQ9ImNsaXAwIj48cmVjdA0KICAgICAgICAgeD0iMTE2MSINCiAgICAgICAgIHk9IjE3NTciDQogICAgICAgICB3aWR0aD0iMjU5Ig0KICAgICAgICAgaGVpZ2h0PSIyNjAiDQogICAgICAgICBpZD0icmVjdDIiIC8+PC9jbGlwUGF0aD48L2RlZnM+PGcNCiAgICAgY2xpcC1wYXRoPSJ1cmwoI2NsaXAwKSINCiAgICAgdHJhbnNmb3JtPSJtYXRyaXgoMC45LDAsMCwwLjksLTEwMzEuOSwtMTU2Ny43KSINCiAgICAgaWQ9ImcxMSI+PHBhdGgNCiAgICAgICBzdHlsZT0iY29sb3I6IzAwMDAwMDtmaWxsOiMyNjI2MjY7ZmlsbC1ydWxlOmV2ZW5vZGQ7c3Ryb2tlLW1pdGVybGltaXQ6ODstaW5rc2NhcGUtc3Ryb2tlOm5vbmUiDQogICAgICAgZD0ibSAxMjQ0LjI5MywxOTE5LjE4NzUgLTMxLjczNjQsODMuNjI1IGggMTQuOTQzNCAxNDEuOTQzNCBsIC0zMS43MzY0LC04My42MjUgeiINCiAgICAgICBpZD0icGF0aDkiIC8+PHBhdGgNCiAgICAgICBpZD0icGF0aDE0MiINCiAgICAgICBzdHlsZT0iZmlsbDojZmZmZmZmO2ZpbGwtb3BhY2l0eToxO3N0cm9rZTpub25lIg0KICAgICAgIGQ9Im0gMTI1OC41MjczLDE5MzkuODEyNSAtMTYuMDgzOSw0Mi4zNzUgaCA5Ny4xMTMyIGwgLTE2LjA4MzksLTQyLjM3NSB6IiAvPjxwYXRoDQogICAgICAgc3R5bGU9ImNvbG9yOiMwMDAwMDA7ZmlsbDojMjYyNjI2O2ZpbGwtcnVsZTpldmVub2RkO3N0cm9rZS1taXRlcmxpbWl0Ojg7LWlua3NjYXBlLXN0cm9rZTpub25lIg0KICAgICAgIGQ9Im0gMTI4OS41LDE3ODMuMTg3NSBjIC0zMS4wNDMxLDAgLTU2LjMxMjUsMjUuNjIwMiAtNTYuMzEyNSw1Ni44MTI1IDAsMzEuMTkyMyAyNS4yNjk0LDU2LjgxMjUgNTYuMzEyNSw1Ni44MTI1IDMxLjA0MzEsMCA1Ni4zMTI1LC0yNS42MjAyIDU2LjMxMjUsLTU2LjgxMjUgMCwtMzEuMTkyMyAtMjUuMjY5NCwtNTYuODEyNSAtNTYuMzEyNSwtNTYuODEyNSB6Ig0KICAgICAgIGlkPSJwYXRoNyIgLz48cGF0aA0KICAgICAgIGlkPSJwYXRoMTQwIg0KICAgICAgIHN0eWxlPSJmaWxsOiNmZmZmZmY7ZmlsbC1vcGFjaXR5OjE7c3Ryb2tlOm5vbmUiDQogICAgICAgZD0ibSAxMjg5LjUsMTgwMy44MTI1IGMgLTE5Ljc3NjksMCAtMzUuNjg3NSwxNi4wMTk4IC0zNS42ODc1LDM2LjE4NzUgMCwyMC4xNjc3IDE1LjkxMDYsMzYuMTg3NSAzNS42ODc1LDM2LjE4NzUgMTkuNzc2OSwwIDM1LjY4NzUsLTE2LjAxOTggMzUuNjg3NSwtMzYuMTg3NSAwLC0yMC4xNjc3IC0xNS45MTA2LC0zNi4xODc1IC0zNS42ODc1LC0zNi4xODc1IHoiIC8+PC9nPjwvc3ZnPg0K","black-king":"data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9Im5vIj8+DQo8c3ZnDQogICB3aWR0aD0iMjYwIg0KICAgaGVpZ2h0PSIyNjAiDQogICB4bWw6c3BhY2U9InByZXNlcnZlIg0KICAgb3ZlcmZsb3c9ImhpZGRlbiINCiAgIHZlcnNpb249IjEuMSINCiAgIGlkPSJzdmczNzgiDQogICB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciDQogICB4bWxuczpzdmc9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcw0KICAgICBpZD0iZGVmczM3MCI+PGNsaXBQYXRoDQogICAgICAgaWQ9ImNsaXAwIj48cmVjdA0KICAgICAgICAgeD0iMjQ2MCINCiAgICAgICAgIHk9IjE0OTciDQogICAgICAgICB3aWR0aD0iMjYwIg0KICAgICAgICAgaGVpZ2h0PSIyNjAiDQogICAgICAgICBpZD0icmVjdDM2NyIgLz48L2NsaXBQYXRoPjwvZGVmcz48Zw0KICAgICBjbGlwLXBhdGg9InVybCgjY2xpcDApIg0KICAgICB0cmFuc2Zvcm09Im1hdHJpeCgwLjk1LDAsMCwwLjk1LC0yMzMwLjUyNjcsLTE0MTUuNzI1KSINCiAgICAgaWQ9ImczNzYiPjxwYXRoDQogICAgICAgZD0ibSAyNTU4LDE1NDggYyAwLC0xNy4xMiAxMy42NiwtMzEgMzAuNSwtMzEgMTYuODQsMCAzMC41LDEzLjg4IDMwLjUsMzEgMCwxNy4xMiAtMTMuNjYsMzEgLTMwLjUsMzEgLTE2Ljg0LDAgLTMwLjUsLTEzLjg4IC0zMC41LC0zMSB6Ig0KICAgICAgIGZpbGw9IiMyNjI2MjYiDQogICAgICAgZmlsbC1ydWxlPSJldmVub2RkIg0KICAgICAgIGlkPSJwYXRoMzcyIiAvPjxwYXRoDQogICAgICAgZD0ibSAyNTI0LjE0LDE1OTIuNDQgYyAyMi4wNzM3LC0zLjMwODkgNDMuMDY2NywxMC43ODAyIDU0LjMwMDcsMjguOTg3IDQuODU2Niw1Ljg4ODMgOC41NjgxLDE4Ljc1NTUgMTEuNDk4NSwyMS41MzEyIDguMTEyNywtMjIuNzIxNyAyNC43NzAyLC00NS4zNjg1IDQ5Ljc2NSwtNTAuMTQ1OSAyMi4zNzc0LC00LjY3NzkgNDUuNTMyMiw5LjUwNjkgNTQuMjE0NCwzMC4xMjM5IDEyLjEyOTcsMjcuMjQ1NSA0LjQ4Myw1OC41ODI2IC04Ljc4MTksODMuODg1MyAtNC43MzUsOS44NTc1IC0xMS4zMDM2LDE4LjU3MjYgLTE3Ljk1NjcsMjcuMTc4NSAtNTEuNzg2NywwIC0xMDMuNTczMywwIC0xNTUuMzYsMCAtMTYuMDg0MSwtMTkuOTA0NSAtMjguMjM2NCwtNDMuNTM5NiAtMzEuOTU5NCwtNjkuMDQxOSAtMy42NTAzLC0yMy42NzY4IDMuMzM5NCwtNTAuODc5MiAyNC4xNjE2LC02NC43NzggNi4wMDksLTQuMDUxNCAxMi45MzI5LC02Ljc1MjcgMjAuMTE3OCwtNy43NDAxIHoiDQogICAgICAgZmlsbD0iIzI2MjYyNiINCiAgICAgICBmaWxsLXJ1bGU9ImV2ZW5vZGQiDQogICAgICAgaWQ9InBhdGgzNzQiIC8+PC9nPjwvc3ZnPg0K","black-queen":"data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9Im5vIj8+DQo8c3ZnDQogICB3aWR0aD0iMjYwIg0KICAgaGVpZ2h0PSIyNjAiDQogICB4bWw6c3BhY2U9InByZXNlcnZlIg0KICAgb3ZlcmZsb3c9ImhpZGRlbiINCiAgIHZlcnNpb249IjEuMSINCiAgIGlkPSJzdmcxMSINCiAgIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyINCiAgIHhtbG5zOnN2Zz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxkZWZzDQogICAgIGlkPSJkZWZzNSI+PGNsaXBQYXRoDQogICAgICAgaWQ9ImNsaXAwIj48cmVjdA0KICAgICAgICAgeD0iMTk0MCINCiAgICAgICAgIHk9IjE5OCINCiAgICAgICAgIHdpZHRoPSIyNjAiDQogICAgICAgICBoZWlnaHQ9IjI2MCINCiAgICAgICAgIGlkPSJyZWN0MiIgLz48L2NsaXBQYXRoPjwvZGVmcz48Zw0KICAgICBjbGlwLXBhdGg9InVybCgjY2xpcDApIg0KICAgICB0cmFuc2Zvcm09InRyYW5zbGF0ZSgtMTk0MCwtMTk4KSINCiAgICAgaWQ9Imc5Ij48cGF0aA0KICAgICAgIGQ9Im0gMjA3MCwyMzEgYyAwLDAuMDA0IDAsMC4wMDggMC4wMSwwLjAxMiBsIDQxLjgsODguNDM2IDU4LjE5LC03Mi4zMjggdiAwIDAgTCAyMTQ5Ljc1LDQzMCBoIC0xNTkuNSBMIDE5NzAsMjQ3LjEyIHYgMCAwIGwgMC4xLDAuMTI0IDU4LjA5LDcyLjIwNCB6Ig0KICAgICAgIGZpbGw9IiMyNjI2MjYiDQogICAgICAgZmlsbC1ydWxlPSJldmVub2RkIg0KICAgICAgIGlkPSJwYXRoNyIgLz48L2c+PC9zdmc+DQo=","black-rook":"data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9Im5vIj8+DQo8c3ZnDQogICB3aWR0aD0iMjYwIg0KICAgaGVpZ2h0PSIyNjAiDQogICB4bWw6c3BhY2U9InByZXNlcnZlIg0KICAgb3ZlcmZsb3c9ImhpZGRlbiINCiAgIHZlcnNpb249IjEuMSINCiAgIGlkPSJzdmcxMyINCiAgIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyINCiAgIHhtbG5zOnN2Zz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxkZWZzDQogICAgIGlkPSJkZWZzNSI+PGNsaXBQYXRoDQogICAgICAgaWQ9ImNsaXAwIj48cmVjdA0KICAgICAgICAgeD0iMTQyMCINCiAgICAgICAgIHk9IjE0OTciDQogICAgICAgICB3aWR0aD0iMjYwIg0KICAgICAgICAgaGVpZ2h0PSIyNjAiDQogICAgICAgICBpZD0icmVjdDIiIC8+PC9jbGlwUGF0aD48L2RlZnM+PGcNCiAgICAgY2xpcC1wYXRoPSJ1cmwoI2NsaXAwKSINCiAgICAgdHJhbnNmb3JtPSJtYXRyaXgoMC45NSwwLDAsMC45NSwtMTM0Mi40NzUsLTE0MTUuNjI1KSINCiAgICAgaWQ9ImcxMSI+PHBhdGgNCiAgICAgICBkPSJtIDE0NzksMTczMiAxNS4xMSwtOTYgaCAxMTIuNzggbCAxNS4xMSw5NiB6Ig0KICAgICAgIGZpbGw9IiMyNjI2MjYiDQogICAgICAgZmlsbC1ydWxlPSJldmVub2RkIg0KICAgICAgIGlkPSJwYXRoNyIgLz48cGF0aA0KICAgICAgIGQ9Im0gMTQ2NSwxNTIzIGggNDQuMDggdiA0Mi4zMiBoIDIwLjcxIFYgMTUyMyBoIDQxLjQyIHYgNDIuMzIgaCAyMC43MSBWIDE1MjMgSCAxNjM2IHYgOTYgaCAtMTcxIHoiDQogICAgICAgZmlsbD0iIzI2MjYyNiINCiAgICAgICBmaWxsLXJ1bGU9ImV2ZW5vZGQiDQogICAgICAgaWQ9InBhdGg5IiAvPjwvZz48L3N2Zz4NCg==","black-bishop":"data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9Im5vIj8+DQo8c3ZnDQogICB3aWR0aD0iMjYwIg0KICAgaGVpZ2h0PSIyNjAiDQogICB4bWw6c3BhY2U9InByZXNlcnZlIg0KICAgb3ZlcmZsb3c9ImhpZGRlbiINCiAgIHZlcnNpb249IjEuMSINCiAgIGlkPSJzdmcxMyINCiAgIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyINCiAgIHhtbG5zOnN2Zz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxkZWZzDQogICAgIGlkPSJkZWZzNSI+PGNsaXBQYXRoDQogICAgICAgaWQ9ImNsaXAwIj48cmVjdA0KICAgICAgICAgeD0iMTY4MCINCiAgICAgICAgIHk9IjE5OCINCiAgICAgICAgIHdpZHRoPSIyNjAiDQogICAgICAgICBoZWlnaHQ9IjI2MCINCiAgICAgICAgIGlkPSJyZWN0MiIgLz48L2NsaXBQYXRoPjwvZGVmcz48Zw0KICAgICBjbGlwLXBhdGg9InVybCgjY2xpcDApIg0KICAgICB0cmFuc2Zvcm09InRyYW5zbGF0ZSgtMTY4MCwtMTk4KSINCiAgICAgaWQ9ImcxMSI+PHBhdGgNCiAgICAgICBkPSJtIDE3NjAuNjYsMzc5IDQuNzQsNC41NjkgYyAxMi43MywxMC4wNTEgMjguMDgsMTUuOTIgNDQuNiwxNS45MiAxNi41MiwwIDMxLjg3LC01Ljg2OSA0NC42LC0xNS45MiBsIDQuNzQsLTQuNTY4IDUwLjE2LDUwLjk5OSBoIC0xOTkgeiINCiAgICAgICBmaWxsPSIjMjYyNjI2Ig0KICAgICAgIGZpbGwtcnVsZT0iZXZlbm9kZCINCiAgICAgICBpZD0icGF0aDciIC8+PHBhdGgNCiAgICAgICBkPSJtIDE4MDkuOTA1NCwyMTMuNjYxIGMgMTQuMzEsLTAuNDcyIDI2LjY2LDEzLjYxNiAyNCwyNy41NzMgLTAuMzgsNS42NzYgLTQuNzgsMTEuMjYzIC04LjA4LDE0LjYwMyA0Ljc0LDUuNjE3IDkuNDYsMTEuMjMzIDE0LjE4LDE2Ljg1IC0xMS4wOCwxMC45MjQgLTIyLjE3LDIxLjg0OSAtMzMuMjUsMzIuNzg0IDQuNDcsNC4zOTQgOC45Myw4Ljc5OCAxMy4zOSwxMy4xOTEgMTAuNTQsLTEwLjM2OCAyMS4wNiwtMjAuNzQ2IDMxLjU5LC0zMS4xMTQgMy4yOSw1LjM4OCA3LjA4LDEwLjUxNyAxMC4wNSwxNi4wNTQgOS4zNSwyNC4xODYgMC42MSw1NC4wODggLTIxLjI3LDY4LjY0MSAtMTkuMzUsMTMuNzY4IC00Ny43NywxMi4yNDcgLTY1LjU2LC0zLjQxOSAtMjEuMzEsLTE3LjQ1NyAtMjYuNjUsLTUwLjIzMSAtMTIuOCwtNzMuNzYxIDUuMjUsLTguNzA4IDEyLjY4LC0xNS44MTYgMTguOTYsLTIzLjc3OCA0LjQxLC01LjIyOSA4LjgxLC0xMC40NjcgMTMuMjEsLTE1LjY5NiAtMTEuNDYsLTguMTMyIC0xMS4zOCwtMjYuODUgLTAuNzYsLTM1LjcwNiA0LjQyLC0zLjk4OCAxMC4zNiwtNi4yNDkgMTYuMzQsLTYuMjIyIHoiDQogICAgICAgZmlsbD0iIzI2MjYyNiINCiAgICAgICBmaWxsLXJ1bGU9ImV2ZW5vZGQiDQogICAgICAgaWQ9InBhdGg5IiAvPjwvZz48L3N2Zz4NCg==","black-knight":"data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9Im5vIj8+DQo8c3ZnDQogICB3aWR0aD0iMjYwIg0KICAgaGVpZ2h0PSIyNjAiDQogICB4bWw6c3BhY2U9InByZXNlcnZlIg0KICAgb3ZlcmZsb3c9ImhpZGRlbiINCiAgIHZlcnNpb249IjEuMSINCiAgIGlkPSJzdmcxMSINCiAgIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyINCiAgIHhtbG5zOnN2Zz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxkZWZzDQogICAgIGlkPSJkZWZzNSI+PGNsaXBQYXRoDQogICAgICAgaWQ9ImNsaXAwIj48cmVjdA0KICAgICAgICAgeD0iMjcyMCINCiAgICAgICAgIHk9IjE0OTciDQogICAgICAgICB3aWR0aD0iMjYwIg0KICAgICAgICAgaGVpZ2h0PSIyNjAiDQogICAgICAgICBpZD0icmVjdDIiIC8+PC9jbGlwUGF0aD48L2RlZnM+PGcNCiAgICAgY2xpcC1wYXRoPSJ1cmwoI2NsaXAwKSINCiAgICAgdHJhbnNmb3JtPSJtYXRyaXgoMC45NSwwLDAsMC45NSwtMjU3Ny4zMjUxLC0xNDE1LjYyNSkiDQogICAgIGlkPSJnOSI+PHBhdGgNCiAgICAgICBkPSJtIDI4MzcuMDMsMTU3NS4zOCBjIC05Ljc4LDAgLTE3LjcxLDcuOTcgLTE3LjcxLDE3Ljc5IDAsOS44MyA3LjkzLDE3Ljc5IDE3LjcxLDE3Ljc5IDkuNzgsMCAxNy43MSwtNy45NiAxNy43MSwtMTcuNzkgMCwtOS44MiAtNy45MywtMTcuNzkgLTE3LjcxLC0xNy43OSB6IG0gNDMuNDIsLTE5LjggYyAtOS43OCwwIC0xNy43MSw3Ljk3IC0xNy43MSwxNy43OSAwLDkuODMgNy45MywxNy43OSAxNy43MSwxNy43OSA5Ljc4LDAgMTcuNzEsLTcuOTYgMTcuNzEsLTE3Ljc5IDAsLTkuODIgLTcuOTMsLTE3Ljc5IC0xNy43MSwtMTcuNzkgeiBtIC0xMDEuNjgsLTM0LjU4IDUzLjYsMTkuNjIgMTUuMTIsLTYuMzkgYyA5LjUxLC0yLjY0IDE5LjUzLC00LjE0IDMwLjA3LC00LjU4IDQyLjE2LC0xLjc3IDc5LjY3LDEwLjI5IDgxLjQxLDUzLjkzIDEuMiwzMC4wMSAtMzguODksNDkuMzIgLTczLjY1LDU4LjMzIGwgLTEuNzYsMC40MiAyMi44MSw5MS42NyBoIC0xNTUuMDYgYyAtMC42NCwtMjguMSAtMC42MiwtNzIuMTYgMTAuMTMsLTEwOS40MSBsIDYuODcsLTE1Ljk4IC0yMC4zMSwtNTguNTMgNDEuNjYsMTMgeiINCiAgICAgICBmaWxsPSIjMjYyNjI2Ig0KICAgICAgIGZpbGwtcnVsZT0iZXZlbm9kZCINCiAgICAgICBpZD0icGF0aDciIC8+PC9nPjwvc3ZnPg0K","black-pawn":"data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9Im5vIj8+DQo8c3ZnDQogICB3aWR0aD0iMjYwIg0KICAgaGVpZ2h0PSIyNjAiDQogICB4bWw6c3BhY2U9InByZXNlcnZlIg0KICAgb3ZlcmZsb3c9ImhpZGRlbiINCiAgIHZlcnNpb249IjEuMSINCiAgIGlkPSJzdmcxMyINCiAgIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyINCiAgIHhtbG5zOnN2Zz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxkZWZzDQogICAgIGlkPSJkZWZzNSI+PGNsaXBQYXRoDQogICAgICAgaWQ9ImNsaXAwIj48cmVjdA0KICAgICAgICAgeD0iMTE2MSINCiAgICAgICAgIHk9IjQ1OCINCiAgICAgICAgIHdpZHRoPSIyNTkiDQogICAgICAgICBoZWlnaHQ9IjI2MCINCiAgICAgICAgIGlkPSJyZWN0MiIgLz48L2NsaXBQYXRoPjwvZGVmcz48Zw0KICAgICBjbGlwLXBhdGg9InVybCgjY2xpcDApIg0KICAgICB0cmFuc2Zvcm09InRyYW5zbGF0ZSgtMTE2MSwtNDU4KSINCiAgICAgaWQ9ImcxMSI+PHBhdGgNCiAgICAgICBkPSJtIDEyNDQuNTgsNTQ1LjQ2IGMgMCwtMjUuNDA4IDIwLjM3LC00NiA0NS41LC00NiAyNS4xNCwwIDQ1LjUsMjAuNTkyIDQ1LjUsNDYgMCwyNS40MDggLTIwLjM2LDQ2IC00NS41LDQ2IC0yNS4xMywwIC00NS41LC0yMC41OTIgLTQ1LjUsLTQ2IHoiDQogICAgICAgZmlsbD0iIzI2MjYyNiINCiAgICAgICBmaWxsLXJ1bGU9ImV2ZW5vZGQiDQogICAgICAgaWQ9InBhdGg3IiAvPjxwYXRoDQogICAgICAgZD0ibSAxMjI3LjU4LDY4Mi40NTkgMjMuMiwtNjEuMDAxIGggNzguNiBsIDIzLjIsNjEuMDAxIHoiDQogICAgICAgZmlsbD0iIzI2MjYyNiINCiAgICAgICBmaWxsLXJ1bGU9ImV2ZW5vZGQiDQogICAgICAgaWQ9InBhdGg5IiAvPjwvZz48L3N2Zz4NCg=="},PIECE_IMGS={},_imgsPending=Object.keys(PIECE_SRCS).length;for(const[e,t]of Object.entries(PIECE_SRCS)){var img=new Image;img.src=t,img.onload=()=>{0===--_imgsPending&&drawBoard(state.pieces)},PIECE_IMGS[e]=img}var state={rows:8,cols:8,pieces:[],invalidCells:[],firstTo:"white",selectedPiece:"queen",selectedColor:"white",solution:[],solveMoves:[],navIndex:-1,mode:"place",hoverCell:null},canvas=document.getElementById("board-canvas"),ctx=canvas.getContext("2d"),SQ=64;function resizeCanvas(){canvas.width=state.cols*SQ,canvas.height=state.rows*SQ}function drawBoard(e,t=[]){resizeCanvas();for(let e=0;e<state.rows;e++)for(let t=0;t<state.cols;t++){var o=(e+t)%2==0;ctx.fillStyle=o?"#d4b483":"#7a5230",ctx.fillRect(t*SQ,e*SQ,SQ,SQ)}state.invalidCells.forEach(({r:e,c:t})=>{ctx.fillStyle="rgba(0,0,0,1.0)",ctx.fillRect(t*SQ,e*SQ,SQ,SQ),ctx.strokeStyle="rgba(220,60,60,0.85)",ctx.lineWidth=2,ctx.beginPath(),ctx.moveTo(t*SQ+6,e*SQ+6),ctx.lineTo(t*SQ+SQ-6,e*SQ+SQ-6),ctx.moveTo(t*SQ+SQ-6,e*SQ+6),ctx.lineTo(t*SQ+6,e*SQ+SQ-6),ctx.stroke()}),state.hoverCell&&(ctx.fillStyle="rgba(100,190,230,0.32)",ctx.fillRect(state.hoverCell.c*SQ,state.hoverCell.r*SQ,SQ,SQ)),t.forEach(([e,t,o])=>{"selected"===o?(ctx.fillStyle="rgba(200,169,110,0.45)",ctx.fillRect(t*SQ,e*SQ,SQ,SQ)):"move"===o?(ctx.beginPath(),ctx.arc(t*SQ+SQ/2,e*SQ+SQ/2,.18*SQ,0,2*Math.PI),ctx.fillStyle="rgba(200,169,110,0.6)",ctx.fill()):"capture"===o?(ctx.strokeStyle="rgba(200,80,80,0.8)",ctx.lineWidth=3,ctx.strokeRect(t*SQ+2,e*SQ+2,SQ-4,SQ-4)):"lastmove"===o&&(ctx.fillStyle="rgba(100,160,200,0.3)",ctx.fillRect(t*SQ,e*SQ,SQ,SQ))}),ctx.font=`bold ${.18*SQ}px JetBrains Mono`,ctx.fillStyle="rgba(0,0,0,0.35)";for(let e=0;e<state.rows;e++)ctx.fillText(state.rows-e,3,e*SQ+.22*SQ);for(let e=0;e<state.cols;e++)ctx.fillText(String.fromCharCode(65+e),e*SQ+.82*SQ,state.rows*SQ-3);var s=.07*SQ;e.forEach(e=>{var t=PIECE_IMGS[`${e.color}-${e.type}`];t&&t.complete&&t.naturalWidth>0&&ctx.drawImage(t,e.col*SQ+s,e.row*SQ+s,SQ-2*s,SQ-2*s)})}function buildPieceSelector(){var e=document.getElementById("piece-selector");e.innerHTML="",PIECE_TYPES.forEach(t=>{var o=document.createElement("div");o.className="piece-btn"+(t===state.selectedPiece?" active":""),o.title=t,o.innerHTML=`<img src="${PIECE_SRCS[`${state.selectedColor}-${t}`]}" style="width:76%;height:76%;object-fit:contain;pointer-events:none">`,o.onclick=()=>{state.selectedPiece=t,buildPieceSelector()},e.appendChild(o)})}function setMode(e){state.mode=e,document.getElementById("btn-mode-place").className="mode-btn"+("place"===e?" active-place":""),document.getElementById("btn-mode-invalid").className="mode-btn"+("invalid"===e?" active-invalid":""),document.getElementById("piece-controls").style.display="place"===e?"":"none",document.getElementById("invalid-hint").style.display="invalid"===e?"":"none"}function selectColor(e){state.selectedColor=e,document.getElementById("btn-white").className="color-btn"+("white"===e?" active-w":""),document.getElementById("btn-black").className="color-btn"+("black"===e?" active-b":""),buildPieceSelector()}function renderPiecesList(){var e=document.getElementById("pieces-list");0!==state.pieces.length?e.innerHTML=state.pieces.map((e,t)=>`<div class="piece-item">\n      <span><span class="pi-sym"><img src="${PIECE_SRCS[`${e.color}-${e.type}`]}" style="width:1.2rem;height:1.2rem;vertical-align:middle"></span>${e.color} ${e.type} @ ${String.fromCharCode(65+e.col)}${state.rows-e.row}</span>\n      <span class="pi-del" onclick="removePiece(${t})">✕</span>\n    </div>`).join(""):e.innerHTML='<div style="font-size:0.65rem;color:var(--text-dim);padding:0.3rem 0">No pieces placed.</div>'}function removePiece(e){state.pieces.splice(e,1),renderPiecesList(),drawBoard(state.pieces)}function clearBoard(){state.pieces=[],state.invalidCells=[],state.solution=[],state.solveMoves=[],state.navIndex=-1,setInvalidCells([]),renderPiecesList(),drawBoard([]),setStatus("ready","Board cleared."),document.getElementById("move-counter").textContent="— / —",document.getElementById("solution-log").innerHTML='<div class="log-info">Configure board and press Solve →</div>'}function _redrawWithHover(){state.solution.length>0&&state.navIndex>=0?drawBoardAtNav():drawBoard(state.pieces)}function setStatus(e,t){document.getElementById("status-dot").className="status-dot"+("active"===e?" active":"error"===e?" error":"thinking"===e?" thinking":""),document.getElementById("status-text").textContent=t}function loadPreset(e){var t={mate1:{rows:8,cols:8,firstTo:"white",pieces:[{type:"king",color:"white",row:7,col:4},{type:"queen",color:"white",row:0,col:6},{type:"rook",color:"white",row:1,col:0},{type:"king",color:"black",row:0,col:4}]},mate2:{rows:8,cols:8,firstTo:"white",pieces:[{type:"king",color:"white",row:7,col:4},{type:"queen",color:"white",row:3,col:3},{type:"rook",color:"white",row:0,col:7},{type:"king",color:"black",row:0,col:4},{type:"pawn",color:"black",row:1,col:3},{type:"pawn",color:"black",row:1,col:5}]},endgame:{rows:8,cols:8,firstTo:"white",pieces:[{type:"king",color:"white",row:4,col:4},{type:"queen",color:"white",row:7,col:7},{type:"king",color:"black",row:0,col:0}]},rooks:{rows:8,cols:8,firstTo:"white",pieces:[{type:"king",color:"white",row:7,col:4},{type:"rook",color:"white",row:5,col:0},{type:"king",color:"black",row:0,col:4},{type:"rook",color:"black",row:2,col:7}]}}[e];state.rows=t.rows,state.cols=t.cols,state.firstTo=t.firstTo,state.pieces=JSON.parse(JSON.stringify(t.pieces)),document.getElementById("inp-rows").value=t.rows,document.getElementById("inp-cols").value=t.cols,document.getElementById("inp-first").value=t.firstTo,state.firstTo=t.firstTo,setPlayerColor(t.firstTo),document.getElementById("turn-label").textContent=("white"===t.firstTo?"White":"Black")+" to move",state.solution=[],state.solveMoves=[],state.navIndex=-1,renderPiecesList(),drawBoard(state.pieces),setStatus("ready",`Preset loaded: ${e}`)}function formatMove(e,t,o){var s=t.find(t=>t.row===e.fromR&&t.col===e.fromC);return s?`${SYMBOLS[s.color][s.type]} ${String.fromCharCode(65+e.fromC)+(o-e.fromR)}→${String.fromCharCode(65+e.toC)+(o-e.toR)}${e.capture?"✕":""}`:"?"}function applyBoardSize(){var e=Math.min(12,Math.max(2,parseInt(document.getElementById("inp-rows").value)||8)),t=Math.min(12,Math.max(2,parseInt(document.getElementById("inp-cols").value)||8));document.getElementById("inp-rows").value=e,document.getElementById("inp-cols").value=t;var o=state.pieces.filter(o=>o.row>=e||o.col>=t).length;state.pieces=state.pieces.filter(o=>o.row<e&&o.col<t),state.invalidCells=[],setInvalidCells([]),state.rows=e,state.cols=t,state.solution=[],state.solveMoves=[],state.navIndex=-1,renderPiecesList(),drawBoard(state.pieces),document.getElementById("move-counter").textContent="— / —",setStatus("ready",`Board resized to ${e}×${t}${o?` · ${o} piece(s) removed (out of bounds)`:""}`)}function resetSolution(){state.solution=[],state.solveMoves=[],state.navIndex=-1,document.getElementById("move-counter").textContent="— / —",document.getElementById("solution-log").innerHTML='<div class="log-info">Solution cleared. Board intact — press Solve to run again.</div>',drawBoard(state.pieces),setStatus("ready","Solution reset. Board unchanged.")}canvas.addEventListener("click",e=>{var t=canvas.getBoundingClientRect(),o=e.clientX-t.left,s=e.clientY-t.top,a=Math.floor(o/SQ),r=Math.floor(s/SQ);if(!(r<0||r>=state.rows||a<0||a>=state.cols)){if("invalid"===state.mode){var I=state.invalidCells.findIndex(e=>e.r===r&&e.c===a);return-1!==I?state.invalidCells.splice(I,1):state.invalidCells.push({r:r,c:a}),setInvalidCells(state.invalidCells),void drawBoard(state.pieces)}var i=state.pieces.findIndex(e=>e.row===r&&e.col===a);-1!==i?state.pieces.splice(i,1):state.pieces.push({type:state.selectedPiece,color:state.selectedColor,row:r,col:a}),renderPiecesList(),drawBoard(state.pieces)}}),canvas.addEventListener("mousemove",e=>{var t=canvas.getBoundingClientRect(),o=Math.floor((e.clientX-t.left)/SQ),s=Math.floor((e.clientY-t.top)/SQ);s>=0&&s<state.rows&&o>=0&&o<state.cols?state.hoverCell&&state.hoverCell.r===s&&state.hoverCell.c===o||(state.hoverCell={r:s,c:o},_redrawWithHover()):state.hoverCell&&(state.hoverCell=null,_redrawWithHover())}),canvas.addEventListener("mouseleave",()=>{state.hoverCell&&(state.hoverCell=null,_redrawWithHover())});var VALID_TYPES=new Set(["king","queen","rook","bishop","knight","pawn"]),VALID_COLORS=new Set(["white","black"]),PIECE_TYPE_MAP=["king","pawn","knight","bishop","rook","queen"];function normalizeNewFormat(e){if(e.board&&"object"==typeof e.board){var t=e.board.rows,o=e.board.cols;e.rows=t,e.cols=o,e.firstTo=e.isPlayerWhite?"white":"black",e.pieces=(Array.isArray(e.pieces)?e.pieces:[]).map(e=>({row:t-1-e.y,col:e.x,type:PIECE_TYPE_MAP[e.type]??e.type,color:e.isWhite?"white":"black",magnitude:e.magnitude,sqrMagnitude:e.sqrMagnitude})),e.invalidCells=(Array.isArray(e.board.invalidCells)?e.board.invalidCells:[]).map(([e,o])=>({r:t-1-o,c:e}))}}function parseBoardState(e){var t;try{t=JSON.parse(e)}catch(e){throw new Error("Invalid JSON: "+e.message)}normalizeNewFormat(t);var o=[],s=parseInt(t.rows),a=parseInt(t.cols);if(!Number.isFinite(s)||s<2||s>12)throw new Error(`"rows" must be 2–12 (got ${JSON.stringify(t.rows)})`);if(!Number.isFinite(a)||a<2||a>12)throw new Error(`"cols" must be 2–12 (got ${JSON.stringify(t.cols)})`);var r=t.firstTo;"white"!==r&&"black"!==r&&(o.push('"firstTo" must be "white" or "black" — defaulting to "white"'),r="white");var I=[],i=new Set;(Array.isArray(t.pieces)?t.pieces:[]).forEach((e,t)=>{var r=`pieces[${t}]`;if(VALID_TYPES.has(e.type))if(VALID_COLORS.has(e.color)){var g=parseInt(e.row),c=parseInt(e.col);if(!Number.isFinite(g)||g<0||g>=s||!Number.isFinite(c)||c<0||c>=a)o.push(`${r} (${e.color} ${e.type}): position (${e.row},${e.col}) out of bounds — skipped`);else{var n=`${g},${c}`;if(i.has(n))o.push(`${r} (${e.color} ${e.type}): duplicate position (${g},${c}) — skipped`);else{i.add(n);var C={type:e.type,color:e.color,row:g,col:c};null!=e.magnitude&&(C.magnitude=e.magnitude),null!=e.sqrMagnitude&&(C.sqrMagnitude=e.sqrMagnitude),I.push(C)}}}else o.push(`${r}: unknown color "${e.color}" — skipped`);else o.push(`${r}: unknown type "${e.type}" — skipped`)});for(const e of["white","black"])I.filter(t=>"king"===t.type&&t.color===e).length>1&&o.push(`Multiple ${e} kings — may cause unexpected solver behaviour`);var g=[];return(Array.isArray(t.invalidCells)?t.invalidCells:[]).forEach((e,t)=>{var r=parseInt(e.r),I=parseInt(e.c);!Number.isFinite(r)||r<0||r>=s||!Number.isFinite(I)||I<0||I>=a?o.push(`invalidCells[${t}]: (${e.r},${e.c}) out of bounds — skipped`):g.push({r:r,c:I})}),g.forEach(e=>{i.has(`${e.r},${e.c}`)&&o.push(`Invalid cell (${e.r},${e.c}) overlaps a piece — that piece cannot move`)}),{rows:s,cols:a,firstTo:r,pieces:I,invalidCells:g,warnings:o}}function switchTab(e){document.getElementById("tab-content-manual").style.display="manual"===e?"":"none",document.getElementById("tab-content-file").style.display="file"===e?"":"none",document.getElementById("tab-manual").classList.toggle("active","manual"===e),document.getElementById("tab-file").classList.toggle("active","file"===e)}function loadBoardState(){var e,t=document.getElementById("load-json").value.trim(),o=document.getElementById("load-feedback");if(!t)return o.textContent="Paste a JSON board state above.",void(o.className="load-feedback warn");try{e=parseBoardState(t)}catch(e){return o.textContent="✕ "+e.message,void(o.className="load-feedback err")}state.rows=e.rows,state.cols=e.cols,state.firstTo=e.firstTo,state.pieces=e.pieces,state.invalidCells=e.invalidCells,state.solution=[],state.solveMoves=[],state.navIndex=-1,document.getElementById("inp-rows").value=e.rows,document.getElementById("inp-cols").value=e.cols,document.getElementById("inp-first").value=e.firstTo,document.getElementById("turn-label").textContent=("white"===e.firstTo?"White":"Black")+" to move",document.getElementById("move-counter").textContent="— / —",document.getElementById("solution-log").innerHTML='<div class="log-info">Board loaded from JSON. Press Solve →</div>',setInvalidCells(e.invalidCells),setPlayerColor(e.firstTo),renderPiecesList(),drawBoard(state.pieces),setStatus("active",`Loaded: ${e.pieces.length} piece(s), ${e.invalidCells.length} blocked cell(s)`),e.warnings.length?(o.textContent="⚠ Loaded with warnings:\n"+e.warnings.map(e=>"• "+e).join("\n"),o.className="load-feedback warn"):(o.textContent=`✓ Loaded — ${e.pieces.length} piece(s), ${e.invalidCells.length} blocked cell(s)`,o.className="load-feedback ok")}function copyBoardState(){var e=JSON.stringify({rows:state.rows,cols:state.cols,firstTo:state.firstTo,pieces:state.pieces,invalidCells:state.invalidCells},null,2),t=document.getElementById("copy-state-btn");navigator.clipboard.writeText(e).then(()=>{t.textContent="✓ Copied!",setTimeout(()=>{t.textContent="⎘ Copy State"},1500)}).catch(()=>{document.getElementById("load-json").value=e,"none"===document.getElementById("load-body").style.display&&toggleLoadPanel(),t.textContent="⎘ Copy State"})}function fmt(e){return null==e?"—":e>=1e6?(e/1e6).toFixed(2)+"M":e>=1e3?(e/1e3).toFixed(1)+"k":String(e)}function updateSearchLog(e,t,o){if(e){var s=e.elapsed/1e3;document.getElementById("stat-nodes").textContent=fmt(e.nodes),document.getElementById("stat-pruned").textContent=fmt(e.pruned),document.getElementById("stat-tthits").textContent=fmt(e.ttHits),document.getElementById("stat-elapsed").textContent=s.toFixed(2)+"s",document.getElementById("stat-speed").textContent=s>0?fmt(Math.round(e.nodes/s))+"/s":"—",document.getElementById("stat-depth").textContent=void 0!==e.depth?`${e.depth} / ${e.maxDepth}`:"—"}if(void 0!==t){var a=document.getElementById("stat-status");a.textContent=t,a.className="search-log-status"+(o?" "+o:"")}}var activeWorker=null;function setStopBtn(e){document.getElementById("stop-btn").style.display=e?"":"none"}function stopSolver(){activeWorker&&(activeWorker.terminate(),activeWorker=null,setStopBtn(!1),setStatus("ready","Search stopped."),updateSearchLog(null,"■ Stopped by user.",""))}function runSolver(){state.rows=parseInt(document.getElementById("inp-rows").value)||8,state.cols=parseInt(document.getElementById("inp-cols").value)||8,state.firstTo=document.getElementById("inp-first").value;var e=Math.min(20,Math.max(1,parseInt(document.getElementById("inp-depth").value)||10)),t=document.getElementById("inp-algorithm").value,o=SOLVERS[t],s=Math.min(e,o.depthLimit??e);if(document.getElementById("inp-depth").value=s,document.querySelector("header span").textContent=`${o.name} · depth ${s}`,document.getElementById("turn-label").textContent=("white"===state.firstTo?"White":"Black")+" to move",0!==state.pieces.length)if(state.pieces.find(e=>"king"===e.type)){activeWorker&&(activeWorker.terminate(),activeWorker=null);var a=document.getElementById("solution-log");a.innerHTML=`<div class="log-thinking">⟳ Running ${o.name} (depth=${s})…</div>`,setStatus("thinking","Solving…"),updateSearchLog(null,`⟳ Running ${o.name} at depth ${s}…`,"thinking");var r={pieces:state.pieces,rows:state.rows,cols:state.cols,firstTo:state.firstTo},I=JSON.parse(JSON.stringify(state.pieces)),i=new Worker(URL.createObjectURL(new Blob([__WORKER_SRC__],{type:"application/javascript"})));activeWorker=i,setStopBtn(!0),i.postMessage({algKey:t,boardState:r,options:{maxDepth:s},invalidCells:state.invalidCells}),i.onmessage=({data:e})=>{if("progress"!==e.type){if("error"===e.type)return a.innerHTML=`<div class="log-fail">Engine error: ${e.message}</div>`,setStatus("error","Error: "+e.message),updateSearchLog(null,"✕ Engine error: "+e.message,"error"),i.terminate(),activeWorker=null,void setStopBtn(!1);if("done"===e.type){var{path:t,score:o,label:r}=e.result;if(i.terminate(),activeWorker=null,setStopBtn(!1),0===t.length)return a.innerHTML=`<div class="log-fail">No winning line found at depth ${s}. Try a different setup.</div>`,setStatus("error","No solution found."),void updateSearchLog(null,"✕ No solution found at depth "+s,"error");state.solution=[I,...t.map(e=>e.pieces)],state.solveMoves=t.map((e,o)=>formatMove(e.move,0===o?I:t[o-1].pieces,state.rows)),state.navIndex=0,a.innerHTML=`<div class="log-win">${r} (score: ${o})</div>`+state.solveMoves.map((e,t)=>`<div class="log-move"><span>${t+1}.</span> ${"white"===state.firstTo==(t%2==0)?"♔ White":"♚ Black"}: ${e}</div>`).join(""),drawBoardAtNav(),setStatus("active",`Solution: ${t.length} moves · Score: ${o}`),updateSearchLog(null,`✓ Done — ${t.length} move solution, score ${o}`,"done")}}else updateSearchLog(e.stats,`⟳ Searching… depth ${e.stats.depth} / ${e.stats.maxDepth}`,"thinking")},i.onerror=e=>{a.innerHTML=`<div class="log-fail">Worker error: ${e.message}</div>`,setStatus("error","Worker error"),updateSearchLog(null,"✕ Worker error: "+e.message,"error"),activeWorker=null,setStopBtn(!1)}}else setStatus("error","At least one king is required.");else setStatus("error","Place pieces first!")}function navMove(e){0!==state.solution.length&&(state.navIndex=Math.max(0,Math.min(state.solution.length-1,state.navIndex+e)),drawBoardAtNav())}function drawBoardAtNav(){if(0!==state.solution.length){var e=state.solution[state.navIndex];document.getElementById("move-counter").textContent=`Move ${state.navIndex} / ${state.solution.length-1}`;var t=[];if(state.navIndex>0){var o=state.solution[state.navIndex-1];for(const s of e){o.find(e=>e.type===s.type&&e.color===s.color&&e.row===s.row&&e.col===s.col)||t.push([s.row,s.col,"lastmove"])}for(const s of o){e.find(e=>e.type===s.type&&e.color===s.color&&e.row===s.row&&e.col===s.col)||t.push([s.row,s.col,"lastmove"])}}var s="white"===state.firstTo==(state.navIndex%2==0)?"White":"Black";document.getElementById("turn-label").textContent=s+" to move",drawBoard(e,t)}}buildPieceSelector(),renderPiecesList(),drawBoard(state.pieces),loadPreset("mate1"),Object.assign(window,{selectColor:selectColor,clearBoard:clearBoard,loadPreset:loadPreset,applyBoardSize:applyBoardSize,resetSolution:resetSolution,runSolver:runSolver,stopSolver:stopSolver,navMove:navMove,removePiece:removePiece,setMode:setMode,loadBoardState:loadBoardState,copyBoardState:copyBoardState,switchTab:switchTab});
+
+</script>
+</body>
+</html>
