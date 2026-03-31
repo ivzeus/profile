@@ -1,61 +1,369 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>My playground</title>
-    <link rel="stylesheet" href="styles.css" />
+    <title>ivzeus | Playground</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=Noto+Sans:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/icon?family=Material+Icons"
+      rel="stylesheet"
+    />
+    <script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              primary: "#2b8cee",
+              "bg-light": "#f6f7f8",
+              "bg-dark": "#101922",
+              "terminal-black": "#0d1117",
+              "terminal-gray": "#233648",
+              "terminal-text": "#92adc9",
+            },
+            fontFamily: {
+              display: ["Space Grotesk", "sans-serif"],
+              body: ["Noto Sans", "sans-serif"],
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      @keyframes blink {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0;
+        }
+      }
+      .cursor {
+        animation: blink 1s step-end infinite;
+      }
+      ::-webkit-scrollbar {
+        width: 6px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #0d1117;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #233648;
+        border-radius: 3px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #2b8cee;
+      }
+      .fade-in {
+        animation: fadeIn 0.8s ease-in-out;
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+    </style>
   </head>
-  <body>
-    <header>
-      <div class="container">
-        <h1>ivzeus</h1>
-        <p>Developer & Engineer | Playground</p>
+  <body
+    class="bg-terminal-black text-terminal-text font-body min-h-screen flex flex-col"
+  >
+    <!-- Terminal Window Header -->
+    <header
+      class="sticky top-0 z-50 bg-terminal-gray border-b border-black/40 px-4 py-2 flex items-center gap-3"
+    >
+      <span class="material-icons text-primary" style="font-size: 1rem"
+        >terminal</span
+      >
+      <span class="font-display text-white text-sm" id="terminal-label"
+        >user@portfolio:~</span
+      >
+      <div class="ml-auto flex gap-2 items-center">
+        <span class="w-3 h-3 rounded-full bg-yellow-400 opacity-70"></span>
+        <span class="w-3 h-3 rounded-full bg-green-400 opacity-70"></span>
+        <span class="w-3 h-3 rounded-full bg-red-500 opacity-70"></span>
       </div>
     </header>
 
-    <main class="container">
-      <section id="projects">
-        <h2>Featured Projects</h2>
+    <main
+      class="flex-1 max-w-4xl mx-auto w-full px-4 sm:px-8 py-12 space-y-20"
+    >
+      <!-- Hero -->
+      <section class="fade-in">
+        <p class="text-primary font-display font-bold text-4xl sm:text-6xl">
+          &gt; Hello, World.<span class="cursor text-white">_</span>
+        </p>
+        <p class="mt-4 text-terminal-text text-lg" id="hero-subtitle"></p>
+      </section>
 
-        <div class="project-list">
-          <article class="project-card">
-            <h3>Quiz App Challenge</h3>
-            <p>
-              Simple Quiz App using NextJS + cryptography to encrypt quiz data.
-            </p>
-            <a href="./quiz/index.html" class="cta-link">View Project Demo →</a>
-          </article>
-
-          <article class="project-card">
-            <h3>Cryptography playground</h3>
-            <p>Simple Encryption / Decryption webapp.</p>
-            <a href="./crypto_playground/index.html" class="cta-link"
-              >View Project Demo →</a
-            >
-          </article>
-
-          <article class="project-card">
-            <h3>Behavior Tree playground</h3>
-            <p>Simple Behavior tree designer app using React Flow + Zustand.</p>
-            <a href="./behavior_tree_playground/index.html" class="cta-link"
-              >View Project Demo →</a
-            >
-          </article>
-
-          <article class="project-card">
-            <h3>Simple chess solver</h3>
-            <p>Simple chess solver using custom alpha-beta pruning algorithm.</p>
-            <a href="./chess_solver/index.html" class="cta-link"
-              >View Project Demo →</a
-            >
-          </article>
+      <!-- About -->
+      <section>
+        <div class="flex items-center gap-2 mb-6">
+          <span class="text-green-400 font-display">&#10145;</span>
+          <span class="text-primary font-display font-semibold">~</span>
+          <span class="text-white font-display text-sm"
+            >$ ./about-me.sh</span
+          >
         </div>
+        <div
+          class="border border-terminal-gray rounded p-6 bg-terminal-gray/20"
+        >
+          <div class="space-y-4">
+            <div class="flex items-center gap-3 flex-wrap">
+              <h2
+                class="text-white font-display font-bold text-2xl"
+                id="profile-name"
+              ></h2>
+              <span
+                class="text-xs bg-green-500/20 text-green-400 border border-green-500/30 px-2 py-0.5 rounded font-display"
+                >&#9679; ONLINE</span
+              >
+            </div>
+            <p
+              class="text-primary font-display text-sm"
+              id="profile-handle"
+            ></p>
+            <div
+              class="font-mono text-sm bg-terminal-black rounded p-4 border border-terminal-gray leading-relaxed"
+              id="profile-code"
+            ></div>
+            <div class="flex gap-3 pt-1 flex-wrap" id="profile-links"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Skills -->
+      <section id="skills-section" class="hidden">
+        <div class="flex items-center gap-2 mb-1">
+          <span class="text-green-400 font-display">&#10145;</span>
+          <span class="text-primary font-display font-semibold">~/skills</span>
+        </div>
+        <p class="text-terminal-text text-sm mb-6">$ cat tech-stack.json</p>
+        <div class="space-y-4" id="skills-grid"></div>
+        <div id="certs-block" class="hidden mt-6 border border-terminal-gray rounded p-5 bg-terminal-gray/20">
+          <div class="flex items-center gap-2 mb-3">
+            <span class="material-icons text-primary" style="font-size:1rem">verified</span>
+            <span class="text-white font-display text-sm font-semibold">Certifications</span>
+          </div>
+          <ul class="space-y-1.5" id="certs-list"></ul>
+        </div>
+      </section>
+
+      <!-- Projects -->
+      <section>
+        <div class="flex items-center gap-2 mb-1">
+          <span class="text-green-400 font-display">&#10145;</span>
+          <span class="text-primary font-display font-semibold"
+            >~/projects</span
+          >
+        </div>
+        <p class="text-terminal-text text-sm mb-6">
+          $ ls -al --sort=date
+        </p>
+        <div
+          class="grid grid-cols-1 md:grid-cols-2 gap-4"
+          id="projects-grid"
+        ></div>
+      </section>
+
+      <!-- Experience (only rendered if data.experience has entries) -->
+      <section id="experience-section" class="hidden">
+        <div class="flex items-center gap-2 mb-1">
+          <span class="text-green-400 font-display">&#10145;</span>
+          <span class="text-primary font-display font-semibold"
+            >~/experience</span
+          >
+        </div>
+        <p class="text-terminal-text text-sm mb-6">
+          $ git log --graph --oneline
+        </p>
+        <div
+          class="relative border-l border-terminal-gray ml-4"
+          id="experience-list"
+        ></div>
       </section>
     </main>
 
-    <footer>
-      <p id="build-info">Built: Fri Oct 31 17:50:47 +07 2025</p>
+    <!-- Status Bar Footer -->
+    <footer
+      class="sticky bottom-0 bg-primary text-white text-xs font-display px-4 py-1 flex items-center justify-between"
+    >
+      <div class="flex gap-4">
+        <span>&#9135; main</span>
+        <span>UTF-8</span>
+      </div>
+      <span id="build-timestamp"></span>
     </footer>
+
+    <script>
+      const ICON_MAP = {
+        quiz: "quiz",
+        lock: "lock",
+        account_tree: "account_tree",
+        extension: "extension",
+        terminal: "terminal",
+        cloud: "cloud",
+        palette: "palette",
+        code: "code",
+        folder: "folder_open",
+      };
+
+      function formatDate(iso) {
+        return new Date(iso).toLocaleString("en-US", {
+          weekday: "short",
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+          timeZoneName: "short",
+        });
+      }
+
+      function renderProfile(p) {
+        document.getElementById("terminal-label").textContent =
+          p.handle + "@portfolio:~";
+        document.getElementById("hero-subtitle").textContent = p.bio;
+        document.getElementById("profile-name").textContent = p.name;
+        document.getElementById("profile-handle").textContent =
+          "@" + p.handle;
+        document.title = p.handle + " | Playground";
+
+        const lines = [
+          `<span class="text-purple-400">const</span> <span class="text-blue-300">role</span>      = <span class="text-green-300">"${p.role}"</span>;`,
+          `<span class="text-purple-400">const</span> <span class="text-blue-300">location</span>  = <span class="text-green-300">"${p.location}"</span>;`,
+          `<span class="text-purple-400">const</span> <span class="text-blue-300">interests</span> = [${p.interests
+            .map((i) => `<span class="text-green-300">"${i}"</span>`)
+            .join(", ")}];`,
+        ];
+        document.getElementById("profile-code").innerHTML = lines.join(
+          "<br/>"
+        );
+
+        const linksEl = document.getElementById("profile-links");
+        if (p.email) {
+          linksEl.innerHTML += `<a href="mailto:${p.email}" class="flex items-center gap-1 text-xs border border-terminal-gray px-3 py-1.5 rounded hover:border-primary hover:text-primary transition-colors"><span class="material-icons" style="font-size:1rem">mail</span> Mail</a>`;
+        }
+        if (p.github) {
+          linksEl.innerHTML += `<a href="${p.github}" target="_blank" rel="noopener" class="flex items-center gap-1 text-xs border border-terminal-gray px-3 py-1.5 rounded hover:border-primary hover:text-primary transition-colors"><span class="material-icons" style="font-size:1rem">code</span> GitHub</a>`;
+        }
+        if (p.linkedin) {
+          linksEl.innerHTML += `<a href="${p.linkedin}" target="_blank" rel="noopener" class="flex items-center gap-1 text-xs border border-terminal-gray px-3 py-1.5 rounded hover:border-primary hover:text-primary transition-colors"><span class="material-icons" style="font-size:1rem">person</span> LinkedIn</a>`;
+        }
+      }
+
+      function renderSkills(skills, certifications) {
+        if (!skills || skills.length === 0) return;
+        document.getElementById("skills-section").classList.remove("hidden");
+        document.getElementById("skills-grid").innerHTML = skills
+          .map(
+            (s) => `
+          <div class="border border-terminal-gray rounded p-4 bg-terminal-gray/20">
+            <div class="flex items-center gap-2 mb-3">
+              <span class="material-icons text-primary" style="font-size:1rem">${s.icon}</span>
+              <span class="text-white font-display text-sm font-semibold">${s.category}</span>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              ${s.items
+                .map(
+                  (item) =>
+                    `<span class="text-xs bg-terminal-black text-terminal-text border border-terminal-gray px-2 py-0.5 rounded font-mono">${item}</span>`
+                )
+                .join("")}
+            </div>
+          </div>`
+          )
+          .join("");
+
+        if (certifications && certifications.length > 0) {
+          document.getElementById("certs-block").classList.remove("hidden");
+          document.getElementById("certs-list").innerHTML = certifications
+            .map(
+              (c) =>
+                `<li class="flex items-start gap-2 text-xs text-terminal-text"><span class="text-primary mt-0.5">&#10003;</span>${c}</li>`
+            )
+            .join("");
+        }
+      }
+
+      function renderProjects(projects) {
+        document.getElementById("projects-grid").innerHTML = projects
+          .map(
+            (p) => `
+          <div class="border border-terminal-gray rounded p-5 bg-terminal-gray/20 hover:border-primary hover:bg-terminal-gray/40 transition-all">
+            <div class="flex items-start justify-between mb-3">
+              <span class="material-icons text-primary" style="font-size:1.5rem">${ICON_MAP[p.icon] || "folder_open"}</span>
+              ${
+                p.link
+                  ? `<a href="${p.link}" class="text-xs text-terminal-text hover:text-primary transition-colors flex items-center gap-1">view <span class="material-icons" style="font-size:0.9rem">arrow_forward</span></a>`
+                  : ""
+              }
+            </div>
+            <h3 class="text-white font-display font-semibold mb-2">${p.title}</h3>
+            <p class="text-terminal-text text-sm mb-4">${p.description}</p>
+            <div class="flex flex-wrap gap-2">
+              ${p.tags
+                .map(
+                  (t) =>
+                    `<span class="text-xs bg-primary/10 text-primary border border-primary/20 px-2 py-0.5 rounded">${t}</span>`
+                )
+                .join("")}
+            </div>
+          </div>`
+          )
+          .join("");
+      }
+
+      function renderExperience(experience) {
+        if (!experience || experience.length === 0) return;
+        document
+          .getElementById("experience-section")
+          .classList.remove("hidden");
+        document.getElementById("experience-list").innerHTML = experience
+          .map(
+            (e, i) => `
+          <div class="relative pl-6 ${i < experience.length - 1 ? "pb-8" : "pb-2"}">
+            <div class="absolute -left-1.5 w-3 h-3 rounded-full bg-primary border-2 border-terminal-black"></div>
+            <p class="text-xs text-terminal-text font-mono mb-1"># ${e.hash || "commit-" + (i + 1)}</p>
+            <h4 class="text-white font-display font-semibold">${e.role}</h4>
+            <p class="text-primary text-sm font-display">${e.company}</p>
+            <p class="text-terminal-text text-xs mb-2">${e.period}</p>
+            <p class="text-terminal-text text-sm">${e.description}</p>
+          </div>`
+          )
+          .join("");
+      }
+
+      async function init() {
+        try {
+          const res = await fetch("./data.json");
+          const data = await res.json();
+          renderProfile(data.profile);
+          renderSkills(data.skills, data.certifications);
+          renderProjects(data.projects);
+          renderExperience(data.experience);
+          document.getElementById("build-timestamp").textContent =
+            "Updated: " + formatDate(data.lastUpdated);
+        } catch (err) {
+          console.error("Failed to load data.json:", err);
+          document.getElementById("hero-subtitle").textContent =
+            "Error loading data.json";
+        }
+      }
+
+      init();
+    </script>
   </body>
 </html>

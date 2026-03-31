@@ -2,7 +2,9 @@
   "name": "ivzeus-playground",
   "version": "1.0.0",
   "description": "Simple static site for ivzeus playground",
-  "scripts": {},
+  "scripts": {
+    "build": "node build.js"
+  },
   "author": "",
   "license": "MIT"
 }

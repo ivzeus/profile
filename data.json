@@ -1,0 +1,107 @@
+{
+  "lastUpdated": "2026-03-31T00:00:00.000Z",
+  "profile": {
+    "handle": "ivzeus",
+    "name": "Toan Hoang",
+    "role": "Technical Team Lead & Full-Stack Engineer",
+    "location": "Ho Chi Minh City, Vietnam",
+    "bio": "15+ years in software development and technical leadership. Specializing in Blockchain, AI integration, high-load systems, and cross-platform engineering.",
+    "interests": ["Open Source", "Game Development", "Algorithms", "Cryptography", "AI"],
+    "email": "invi.zeus@gmail.com",
+    "github": "",
+    "linkedin": "https://www.linkedin.com/in/toan-hoang-372ab338"
+  },
+  "skills": [
+    {
+      "category": "Frontend",
+      "icon": "web",
+      "items": ["ReactJS", "NextJS", "JavaScript / ES6", "HTML / CSS", "Bootstrap", "ReactNative"]
+    },
+    {
+      "category": "Backend & Server",
+      "icon": "dns",
+      "items": ["NodeJS", "ExpressJS", "SailsJS", "Moleculer", "Websockets", "REST APIs", "PHP"]
+    },
+    {
+      "category": "DevOps & Cloud",
+      "icon": "cloud",
+      "items": ["Google Kubernetes Engine (GKE)", "Docker", "CI / CD", "Blockchain Nodes", "Infura"]
+    },
+    {
+      "category": "Emerging Tech",
+      "icon": "auto_awesome",
+      "items": ["AI Integration", "Blockchain", "Smart Contracts", "Ethereum / Solidity"]
+    },
+    {
+      "category": "Leadership & Process",
+      "icon": "groups",
+      "items": ["Technical Team Leadership", "Event-Based Architecture", "Test Driven Development (TDD)", "Code Auditing / Review", "Cross-Platform Synchronization"]
+    }
+  ],
+  "certifications": [
+    "Architecting with Google Kubernetes Engine: Foundations",
+    "Essential Google Cloud Infrastructure: Core Services",
+    "Essential Google Cloud Infrastructure: Foundation",
+    "Google Cloud Fundamentals: Core Infrastructure"
+  ],
+  "projects": [
+    {
+      "title": "Cryptography Playground",
+      "description": "Simple Encryption / Decryption webapp.",
+      "tags": ["JavaScript", "Cryptography"],
+      "icon": "lock",
+      "link": "./crypto_playground/index.html"
+    },
+    {
+      "title": "Behavior Tree Playground",
+      "description": "Simple Behavior tree designer app using React Flow + Zustand.",
+      "tags": ["React", "React Flow", "Zustand"],
+      "icon": "account_tree",
+      "link": "./behavior_tree_playground/index.html"
+    },
+    {
+      "title": "Simple Chess Solver",
+      "description": "Simple chess solver using custom alpha-beta pruning algorithm.",
+      "tags": ["JavaScript", "Algorithms"],
+      "icon": "extension",
+      "link": "./chess_solver/index.html"
+    }
+  ],
+  "experience": [
+    {
+      "role": "Technical Team Lead / Full-Stack Architect",
+      "company": "Blockpass",
+      "period": "May 2017 – Present",
+      "description": "Leading full-stack development of the Blockpass eKYC platform using ReactJS/NextJS and SailsJS/ExpressJS. Designed scalable, high-load architectures with Websockets and Moleculer. Managed decentralized blockchain infrastructure via GKE, proprietary nodes, and Infura. Drove adoption of Event-Based Architecture and Test Driven Development across the team.",
+      "hash": "0a1b2c3d"
+    },
+    {
+      "role": "Technical Leader / Blockchain Architect",
+      "company": "Infinity Blockchain Labs",
+      "period": "Apr 2017 – Sep 2019",
+      "description": "Led teams building decentralized services and full-stack applications using ReactJS and ReactNative. Designed, deployed, and audited Smart Contracts on Ethereum (Solidity). Conducted in-depth research on blockchain systems and represented the company as a speaker at external tech events.",
+      "hash": "2b3c4d5e"
+    },
+    {
+      "role": "Technical Leader",
+      "company": "Skoolbo",
+      "period": "Apr 2016 – Mar 2017",
+      "description": "Maintained and enhanced existing educational games. Developed a new WebGL branch using Unity3D, built server-side services with NodeJS and PHP, and created learning applications for children using Electron and AngularJS.",
+      "hash": "9f8e7d6c"
+    },
+    {
+      "role": "CTO",
+      "company": "JOY Entertainment",
+      "period": "Mar 2013 – Apr 2016",
+      "description": "Led development of Captain Strike, a third-person multiplayer shooter — responsible for game architecture, GLSL shader programming, core multiplayer (client and server), backend services, and game admin tooling. Also shipped Blocks Buddies, a cross-platform puzzle game with async multiplayer built in Unity.",
+      "hash": "1a2b3c4d"
+    },
+    {
+      "role": "Programmer → iOS Supervisor",
+      "company": "Gameloft",
+      "period": "Feb 2009 – Mar 2013",
+      "description": "Progressed from Game Programmer to iOS Programmer Supervisor. Ported and shipped titles across iOS, Windows Mobile, Symbian, PalmOS, and Nokia MeeGo platforms (Asphalt, NOVA, Real Football, GT Racing). Led an elite iOS team and supervised MeeGo projects, three of which reached the market.",
+      "hash": "8fb9c1a2"
+    }
+  ]
+}
