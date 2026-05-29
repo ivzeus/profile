@@ -1,12 +1,18 @@
 {
-  "lastUpdated": "2026-03-31T00:00:00.000Z",
+  "lastUpdated": "2026-05-29T08:04:32.264Z",
   "profile": {
     "handle": "ivzeus",
     "name": "Toan Hoang",
     "role": "Technical Team Lead & Full-Stack Engineer",
     "location": "Ho Chi Minh City, Vietnam",
     "bio": "15+ years in software development and technical leadership. Specializing in Blockchain, AI integration, high-load systems, and cross-platform engineering.",
-    "interests": ["Open Source", "Game Development", "Algorithms", "Cryptography", "AI"],
+    "interests": [
+      "Open Source",
+      "Game Development",
+      "Algorithms",
+      "Cryptography",
+      "AI"
+    ],
     "email": "invi.zeus@gmail.com",
     "github": "",
     "linkedin": "https://www.linkedin.com/in/toan-hoang-372ab338"
@@ -15,27 +21,59 @@
     {
       "category": "Frontend",
       "icon": "web",
-      "items": ["ReactJS", "NextJS", "JavaScript / ES6", "HTML / CSS", "Bootstrap", "ReactNative"]
+      "items": [
+        "ReactJS",
+        "NextJS",
+        "JavaScript / ES6",
+        "HTML / CSS",
+        "Bootstrap",
+        "ReactNative"
+      ]
     },
     {
       "category": "Backend & Server",
       "icon": "dns",
-      "items": ["NodeJS", "ExpressJS", "SailsJS", "Moleculer", "Websockets", "REST APIs", "PHP"]
+      "items": [
+        "NodeJS",
+        "ExpressJS",
+        "SailsJS",
+        "Moleculer",
+        "Websockets",
+        "REST APIs",
+        "PHP"
+      ]
     },
     {
       "category": "DevOps & Cloud",
       "icon": "cloud",
-      "items": ["Google Kubernetes Engine (GKE)", "Docker", "CI / CD", "Blockchain Nodes", "Infura"]
+      "items": [
+        "Google Kubernetes Engine (GKE)",
+        "Docker",
+        "CI / CD",
+        "Blockchain Nodes",
+        "Infura"
+      ]
     },
     {
       "category": "Emerging Tech",
       "icon": "auto_awesome",
-      "items": ["AI Integration", "Blockchain", "Smart Contracts", "Ethereum / Solidity"]
+      "items": [
+        "AI Integration",
+        "Blockchain",
+        "Smart Contracts",
+        "Ethereum / Solidity"
+      ]
     },
     {
       "category": "Leadership & Process",
       "icon": "groups",
-      "items": ["Technical Team Leadership", "Event-Based Architecture", "Test Driven Development (TDD)", "Code Auditing / Review", "Cross-Platform Synchronization"]
+      "items": [
+        "Technical Team Leadership",
+        "Event-Based Architecture",
+        "Test Driven Development (TDD)",
+        "Code Auditing / Review",
+        "Cross-Platform Synchronization"
+      ]
     }
   ],
   "certifications": [
@@ -48,23 +86,45 @@
     {
       "title": "Cryptography Playground",
       "description": "Simple Encryption / Decryption webapp.",
-      "tags": ["JavaScript", "Cryptography"],
+      "tags": [
+        "JavaScript",
+        "Cryptography"
+      ],
       "icon": "lock",
       "link": "./crypto_playground/index.html"
     },
     {
       "title": "Behavior Tree Playground",
       "description": "Simple Behavior tree designer app using React Flow + Zustand.",
-      "tags": ["React", "React Flow", "Zustand"],
+      "tags": [
+        "React",
+        "React Flow",
+        "Zustand"
+      ],
       "icon": "account_tree",
       "link": "./behavior_tree_playground/index.html"
     },
     {
       "title": "Simple Chess Solver",
       "description": "Simple chess solver using custom alpha-beta pruning algorithm.",
-      "tags": ["JavaScript", "Algorithms"],
+      "tags": [
+        "JavaScript",
+        "Algorithms"
+      ],
       "icon": "extension",
       "link": "./chess_solver/index.html"
+    },
+    {
+      "title": "9 Voyages",
+      "description": "A Norse-themed remake of PopCap's Seven Seas (2001). The player commands a Viking longship across mythical Nordic waters, defeating enemy fleets using arrow fire and environmental traps.",
+      "tags": [
+        "JavaScript",
+        "Game",
+        "ThreeJS",
+        "3D"
+      ],
+      "icon": "extension",
+      "link": "./9voyages/index.html"
     }
   ],
   "experience": [
