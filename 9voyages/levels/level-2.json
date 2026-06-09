@@ -1,1 +1,34 @@
-{"theme":"open_norse_sea","width":5,"height":5,"wavesCount":1,"layout":[[0,0,0,0,0],[0,0,0,0,0],[0,1,0,0,0],[0,0,0,0,0],[0,0,0,0,0]],"enemies":[],"runeStoneCount":3,"maelstromCount":2,"iceFloeCount":2,"skullRockCount":1,"flickerMaelstrom":false,"hasMaelstrom":true,"hints":[{"trigger":"level_start","text":"When flight fails, remember: a foe at your broadside is an invitation to send them to the abyss."},{"trigger":"level_start","text":"Steel your resolve—click upon your own ship to unleash a thundering volley!"}],"minReachableCells":20,"minEnemyDistance":3,"maxRetries":50}
+{
+  "theme": "open_norse_sea",
+  "width": 5,
+  "height": 5,
+  "wavesCount": 1,
+  "layout": [
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [0, 1, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0]
+  ],
+  "enemies": [],
+  "runeStoneCount": 3,
+  "maelstromCount": 2,
+  "iceFloeCount": 2,
+  "skullRockCount": 1,
+  "flickerMaelstrom": false,
+  "hasMaelstrom": true,
+  "hints": [
+    {
+      "trigger": "level_start",
+      "text": "When flight fails, remember: a foe at your broadside is an invitation to send them to the abyss."
+    },
+    {
+      "trigger": "level_start",
+      "text": "Steel your resolve\u2014click upon your own ship to unleash a thundering volley!"
+    }
+  ],
+  "minReachableCells": 20,
+  "minEnemyDistance": 3,
+  "maxRetries": 50,
+  "naglfarEnabled": false
+}

@@ -1,27 +1,31 @@
 {
   "theme": "helheim_waters",
-  "width": 9,
-  "height": 9,
+  "width": 11,
+  "height": 11,
   "wavesCount": 1,
   "enemies": [
     {
       "type": "draugr",
-      "count": 4
+      "count": 6
     },
     {
       "type": "jarl",
-      "count": 3
+      "count": 2
+    },
+    {
+      "type": "berserker",
+      "count": 2
     }
   ],
-  "runeStoneCount": 0,
+  "runeStoneCount": 2,
   "maelstromCount": 0,
   "iceFloeCount": 5,
-  "skullRockCount": 2,
+  "skullRockCount": 3,
   "flickerMaelstrom": false,
   "hasMaelstrom": true,
   "hints": [],
   "minReachableCells": 30,
-  "minEnemyDistance": 3,
+  "minEnemyDistance": 2,
   "maxRetries": 50,
   "naglfarEnabled": false
 }

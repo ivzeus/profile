@@ -6,22 +6,26 @@
   "enemies": [
     {
       "type": "draugr",
-      "count": 4
+      "count": 8
     },
     {
       "type": "jarl",
+      "count": 5
+    },
+    {
+      "type": "berserker",
       "count": 3
     }
   ],
-  "runeStoneCount": 0,
+  "runeStoneCount": 2,
   "maelstromCount": 0,
-  "iceFloeCount": 5,
+  "iceFloeCount": 4,
   "skullRockCount": 2,
   "flickerMaelstrom": false,
   "hasMaelstrom": true,
   "hints": [],
   "minReachableCells": 30,
-  "minEnemyDistance": 3,
-  "maxRetries": 50,
-  "naglfarEnabled": false
+  "minEnemyDistance": 2,
+  "maxRetries": 100,
+  "naglfarEnabled": true
 }

@@ -1,7 +1,7 @@
 {
   "theme": "helheim_waters",
-  "width": 7,
-  "height": 7,
+  "width": 9,
+  "height": 9,
   "wavesCount": 1,
   "enemies": [
     {
@@ -11,20 +11,19 @@
     {
       "type": "jarl",
       "count": 2
-    }
-  ],
-  "runeStoneCount": 0,
-  "maelstromCount": 0,
-  "iceFloeCount": 4,
-  "skullRockCount": 2,
-  "flickerMaelstrom": false,
-  "hasMaelstrom": false,
-  "hints": [
+    },
     {
-      "trigger": "level_start",
-      "text": "The horde gathers. Let us see how you fare when the sea is choked with enemies!"
+      "type": "berserker",
+      "count": 1
     }
   ],
+  "runeStoneCount": 2,
+  "maelstromCount": 0,
+  "iceFloeCount": 5,
+  "skullRockCount": 4,
+  "flickerMaelstrom": false,
+  "hasMaelstrom": true,
+  "hints": [],
   "minReachableCells": 30,
   "minEnemyDistance": 3,
   "maxRetries": 50,
