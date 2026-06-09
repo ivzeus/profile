@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2026-05-29T08:04:32.264Z",
+  "lastUpdated": "2026-06-09T16:12:45.732Z",
   "profile": {
     "handle": "ivzeus",
     "name": "Toan Hoang",
@@ -14,8 +14,12 @@
       "AI"
     ],
     "email": "invi.zeus@gmail.com",
-    "github": "",
+    "github": "https://github.com/ivzeus",
     "linkedin": "https://www.linkedin.com/in/toan-hoang-372ab338"
+  },
+  "contact": {
+    "linkedin": "https://www.linkedin.com/in/toan-hoang-372ab338/",
+    "github": "https://github.com/ivzeus"
   },
   "skills": [
     {
